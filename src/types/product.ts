@@ -8,4 +8,5 @@ export interface Product {
   description?: string;
   originalPrice?: number;
   externalUrl?: string;
+  order?: number;
 }

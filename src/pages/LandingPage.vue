@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import ProductGrid from 'components/widgets/ProductGrid.vue';
+import ContactDialog from 'components/widgets/ContactDialog.vue';
 import { useSettingsStore } from 'stores/settings';
 
 const settings = useSettingsStore();
+const showContactDialog = ref(false);
 
 onMounted(() => {
   settings.subscribeToProfile();
@@ -19,56 +21,73 @@ onUnmounted(() => {
     <!-- Hero/Profile Section -->
     <div class="row justify-center items-center q-py-xl q-px-md relative-position min-h-hero">
       <!-- Profile (Centered) -->
-      <div class="col-12 col-md-auto column flex-center text-center z-top">
-        <q-avatar size="150px" class="q-mb-md shadow-3">
-          <img
-            :src="settings.profile.avatarUrl || 'https://placehold.co/200'"
-            style="object-fit: cover; width: 100%; height: 100%"
-          />
-        </q-avatar>
-        <div class="text-h2 text-primary q-mb-sm font-serif">{{ settings.profile.name }}</div>
-        <div class="text-subtitle1 text-grey-8" style="max-width: 400px">
-          {{ settings.profile.bio }}
-        </div>
+      <div class="col-12 col-md-auto column flex-center text-center">
+        <!-- Full Profile Skeleton Loader -->
+        <template v-if="settings.loading">
+          <q-skeleton type="circle" size="150px" class="q-mb-md" />
+          <q-skeleton type="text" width="200px" class="text-h2" />
+          <q-skeleton type="text" width="300px" class="q-mt-sm" />
+          <q-skeleton type="text" width="250px" />
+          <div class="row q-gutter-md q-mt-lg justify-center">
+            <q-skeleton type="QBtn" size="40px" />
+            <q-skeleton type="QBtn" size="40px" />
+            <q-skeleton type="QBtn" size="40px" />
+          </div>
+        </template>
 
-        <!-- Social Media Links -->
-        <div class="row q-gutter-md q-mt-lg justify-center">
-          <q-btn
-            v-if="settings.profile.email"
-            round
-            outline
-            color="primary"
-            icon="email"
-            type="a"
-            :href="'mailto:' + settings.profile.email"
-          >
-            <q-tooltip>Send Email</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="settings.profile.whatsapp"
-            round
-            outline
-            color="primary"
-            icon="fa-brands fa-whatsapp"
-            type="a"
-            :href="'https://wa.me/' + settings.profile.whatsapp.replace('+', '')"
-            target="_blank"
-          >
-            <q-tooltip>WhatsApp</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="settings.profile.instagram"
-            round
-            outline
-            color="primary"
-            icon="fa-brands fa-instagram"
-            type="a"
-            :href="settings.profile.instagram"
-            target="_blank"
-          >
-            <q-tooltip>Instagram</q-tooltip>
-          </q-btn>
-        </div>
+        <!-- Actual Profile Content -->
+        <template v-else>
+          <q-avatar size="150px" class="q-mb-md shadow-3">
+            <q-skeleton v-if="!settings.profile.avatarUrl" type="circle" size="150px" />
+            <img
+              v-else
+              :src="settings.profile.avatarUrl"
+              style="object-fit: cover; width: 100%; height: 100%"
+            />
+          </q-avatar>
+          <div class="text-h2 text-primary q-mb-sm font-serif">{{ settings.profile.name }}</div>
+          <div class="text-subtitle1 text-grey-8" style="max-width: 400px">
+            {{ settings.profile.bio }}
+          </div>
+
+          <!-- Social Media Links -->
+          <div class="row q-gutter-md q-mt-lg justify-center">
+            <q-btn
+              v-if="settings.profile.email"
+              round
+              outline
+              color="primary"
+              icon="email"
+              @click="showContactDialog = true"
+            >
+              <q-tooltip>Send Email</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="settings.profile.whatsapp"
+              round
+              outline
+              color="primary"
+              icon="fa-brands fa-whatsapp"
+              type="a"
+              :href="'https://wa.me/' + settings.profile.whatsapp.replace('+', '')"
+              target="_blank"
+            >
+              <q-tooltip>WhatsApp</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="settings.profile.instagram"
+              round
+              outline
+              color="primary"
+              icon="fa-brands fa-instagram"
+              type="a"
+              :href="settings.profile.instagram"
+              target="_blank"
+            >
+              <q-tooltip>Instagram</q-tooltip>
+            </q-btn>
+          </div>
+        </template>
       </div>
 
       <!-- ID Card (Absolute Right on Desktop, Stacked on Mobile) -->
@@ -77,8 +96,11 @@ onUnmounted(() => {
     <!-- Featured Products -->
     <div class="full-width q-px-xl">
       <q-separator class="q-mb-lg" />
-      <ProductGrid title="Our Latest Products" />
+      <ProductGrid title="I nostri ultimi prodotti" />
     </div>
+
+    <!-- Contact Dialog -->
+    <ContactDialog v-model="showContactDialog" />
   </q-page>
 </template>
 

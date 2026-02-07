@@ -14,6 +14,11 @@ const form = ref({
   whatsapp: '',
   instagram: '',
   email: '',
+  emailJsConfig: {
+    serviceId: '',
+    templateId: '',
+    publicKey: '',
+  },
 });
 
 // Sync form with store when profile data loads
@@ -28,6 +33,10 @@ watch(
       form.value.whatsapp = newVal.whatsapp || '';
       form.value.instagram = newVal.instagram || '';
       form.value.email = newVal.email || '';
+
+      if (newVal.emailJsConfig) {
+        form.value.emailJsConfig = { ...newVal.emailJsConfig };
+      }
     }
   },
   { immediate: true, deep: true },
@@ -229,6 +238,38 @@ const saveSettings = async () => {
             <div :style="{ backgroundColor: palette.primary, flex: 1 }"></div>
             <div :style="{ backgroundColor: palette.secondary, flex: 1 }"></div>
             <q-tooltip>{{ palette.name }}</q-tooltip>
+          </div>
+        </div>
+
+        <!-- Email Configuration -->
+        <div class="text-h6 q-mt-xl">Email Configuration</div>
+        <div class="text-caption text-grey q-mb-md">
+          Configure EmailJS settings for contact form
+        </div>
+        <div class="row q-col-gutter-lg">
+          <div class="col-12 col-md-4">
+            <q-input
+              filled
+              v-model="form.emailJsConfig.serviceId"
+              label="Service ID"
+              hint="Env: VITE_EMAILJS_SERVICE_ID"
+            />
+          </div>
+          <div class="col-12 col-md-4">
+            <q-input
+              filled
+              v-model="form.emailJsConfig.templateId"
+              label="Template ID"
+              hint="Env: VITE_EMAILJS_TEMPLATE_ID"
+            />
+          </div>
+          <div class="col-12 col-md-4">
+            <q-input
+              filled
+              v-model="form.emailJsConfig.publicKey"
+              label="Public Key"
+              hint="Env: VITE_EMAILJS_PUBLIC_KEY"
+            />
           </div>
         </div>
 

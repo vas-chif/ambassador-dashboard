@@ -9,11 +9,12 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import type { Product } from 'src/types/product';
-
 import { useProductsStore } from 'stores/products';
+import { useSecureLogger } from 'src/shared/logger';
 
 const $q = useQuasar();
 const productsStore = useProductsStore();
+const logger = useSecureLogger();
 
 const props = defineProps<{
   modelValue: boolean;
@@ -76,39 +77,12 @@ const saveProduct = async () => {
     imageFile.value = null;
     emit('update:modelValue', false);
   } catch (error: unknown) {
-    console.error(error);
+    logger.error('Error saving product', error);
     $q.notify({ type: 'negative', message: 'Error saving product' });
   } finally {
     isUploading.value = false;
   }
 };
-
-const savedSelection = ref<Range | null>(null);
-
-const saveSelection = () => {
-  const sel = window.getSelection();
-  if (sel && sel.rangeCount > 0) {
-    savedSelection.value = sel.getRangeAt(0);
-  }
-};
-
-const restoreSelection = () => {
-  if (savedSelection.value) {
-    const sel = window.getSelection();
-    if (sel) {
-      sel.removeAllRanges();
-      sel.addRange(savedSelection.value);
-    }
-  }
-};
-
-const applyColor = (color: string | null) => {
-  if (!color) return;
-  restoreSelection();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (document as any).execCommand('foreColor', false, color);
-};
-// Exposed to template via setup
 </script>
 
 <template>
@@ -156,7 +130,7 @@ const applyColor = (color: string | null) => {
             url="http://localhost:4444/upload"
             label="Drag & Drop Photos Here"
             class="full-width q-mb-xl"
-            color="teal"
+            color="primary"
             flat
             bordered
             accept="image/*"
@@ -218,40 +192,12 @@ const applyColor = (color: string | null) => {
                   min-height="8rem"
                   placeholder="Describe your product..."
                   class="bg-white"
-                  content-style="font-size: 14px;"
+                  :content-style="{ fontSize: '14px' }"
                   :toolbar="[
-                    ['bold', 'italic'],
-                    ['token', 'hr', 'link'],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['hr', 'link'],
                   ]"
-                  :definitions="{
-                    token: {
-                      tip: 'Text Color',
-                      icon: 'colorize',
-                      label: 'Color',
-                      handler: () => {}, // Handled via slot
-                    },
-                  }"
                 >
-                  <template v-slot:token>
-                    <q-btn-dropdown
-                      dense
-                      no-caps
-                      flat
-                      icon="colorize"
-                      label="Color"
-                      @before-show="saveSelection"
-                    >
-                      <q-color
-                        model-value=""
-                        v-close-popup
-                        no-header
-                        no-footer
-                        default-view="palette"
-                        class="my-picker"
-                        @update:model-value="applyColor"
-                      />
-                    </q-btn-dropdown>
-                  </template>
                 </q-editor>
               </div>
 
@@ -272,3 +218,11 @@ const applyColor = (color: string | null) => {
     </q-card>
   </q-dialog>
 </template>
+
+<style lang="scss">
+.q-editor__content hr {
+  border: 0;
+  border-top: 1px solid #ccc;
+  margin: 1rem 0;
+}
+</style>

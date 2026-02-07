@@ -16,18 +16,28 @@ export interface PublicProfile {
   whatsapp?: string;
   instagram?: string;
   email?: string;
+  emailJsConfig?: {
+    serviceId: string;
+    templateId: string;
+    publicKey: string;
+  };
 }
 
 export const useSettingsStore = defineStore('settings', () => {
   const profile = ref<PublicProfile>({
-    name: 'Chifeac Maria',
+    name: 'Maria Chifeac',
     bio: 'Welcome to my beauty shop!',
     avatarUrl: '',
-    primaryColor: '#1976D2',
-    secondaryColor: '#26A69A',
+    primaryColor: '#341414',
+    secondaryColor: '#855457',
     whatsapp: '',
     instagram: '',
     email: '',
+    emailJsConfig: {
+      serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || '',
+      templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '',
+      publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '',
+    },
   });
 
   const loading = ref(false);

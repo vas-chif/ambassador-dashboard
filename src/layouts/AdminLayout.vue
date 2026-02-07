@@ -38,7 +38,7 @@ const menuItems = [
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> Beauty Shop Admin </q-toolbar-title>
+        <q-toolbar-title> SIMON OURIAN M.D. Admin Area </q-toolbar-title>
 
         <div>
           <q-btn flat round icon="notifications" />

@@ -43,13 +43,15 @@ export const useProductsStore = defineStore('products', () => {
     unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        products.value = snapshot.docs.map(
-          (doc) =>
-            ({
-              id: doc.id,
-              ...doc.data(),
-            }) as Product,
-        );
+        products.value = snapshot.docs
+          .map(
+            (doc) =>
+              ({
+                id: doc.id,
+                ...doc.data(),
+              }) as Product,
+          )
+          .sort((a, b) => (a.order ?? 999) - (b.order ?? 999)); // Sort by order field
         loading.value = false;
         logger.debug('Products updated', { count: products.value.length });
       },
@@ -104,6 +106,20 @@ export const useProductsStore = defineStore('products', () => {
       logger.info('Product deleted', { id });
     } catch (error: unknown) {
       logger.error('Error deleting product', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateProductOrder = async (productId: string, newOrder: number) => {
+    loading.value = true;
+    try {
+      const docRef = doc(db, 'products', productId);
+      await updateDoc(docRef, { order: newOrder });
+      logger.info('Product order updated', { id: productId, order: newOrder });
+    } catch (error: unknown) {
+      logger.error('Error updating product order', error);
       throw error;
     } finally {
       loading.value = false;
@@ -170,6 +186,7 @@ export const useProductsStore = defineStore('products', () => {
     addProduct,
     updateProduct,
     deleteProduct,
+    updateProductOrder,
     uploadProductImage,
   };
 });
