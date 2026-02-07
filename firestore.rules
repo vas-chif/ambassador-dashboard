@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    // For now, any authenticated user is considered admin/ambassador
+    // In production, you'd check request.auth.token.admin == true or similar
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Products: Public Read, Auth Write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Ambassadors Profile: Public Read, Auth Write (for now)
+    match /ambassadors/{ambassadorId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+      
+      // Ambassador Layout/Config
+      match /config/{document=**} {
+        allow read: if true;
+        allow write: if isAuthenticated();
+      }
+    }
+
+    // Settings (Public Profile): Public Read, Admin Write
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // Orders: Public Create (Simulated)
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if isAuthenticated();
+    }
+  }
+}

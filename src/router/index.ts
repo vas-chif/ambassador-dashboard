@@ -33,5 +33,26 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
 
+  Router.beforeEach(async (to, from, next) => {
+    // Dynamic import to avoid circular dependency if store uses router
+    const { useAuthStore } = await import('stores/auth');
+    const authStore = useAuthStore();
+
+    // Wait for auth to init (simplified)
+    // In a real app we might want to ensure Firebase auth is settled.
+    // authStore.init() is called in App.vue or boot file ideally.
+
+    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+    const isAuthenticated = authStore.isAuthenticated;
+
+    if (requiresAuth && !isAuthenticated) {
+      next('/admin/login');
+    } else if (to.path === '/admin/login' && isAuthenticated) {
+      next('/admin/dashboard');
+    } else {
+      next();
+    }
+  });
+
   return Router;
 });

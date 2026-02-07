@@ -1,0 +1,22 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check auth
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Products Images: Public Read, Auth Write
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+    
+    // Default rule: Deny all others
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
