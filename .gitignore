@@ -32,3 +32,10 @@ yarn-error.log*
 # local .env files
 .env.local*
 .env
+
+# Firebase
+glowandcarespace-maria-firebase-adminsdk-fbsvc-a3c93c2582.json
+firebase-debug.log
+firebase.json
+.firebaserc
+.firebase
