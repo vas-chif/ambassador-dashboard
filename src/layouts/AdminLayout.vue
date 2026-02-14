@@ -28,6 +28,7 @@ const menuItems = [
   { icon: 'dashboard', label: 'Dashboard', to: '/admin/dashboard' },
   { icon: 'people', label: 'Ambassadors', to: '/admin/ambassadors' },
   { icon: 'inventory_2', label: 'Products', to: '/admin/products' },
+  { icon: 'article', label: 'Articles', to: '/admin/articles' },
   { icon: 'settings', label: 'Settings', to: '/admin/settings' },
 ];
 </script>

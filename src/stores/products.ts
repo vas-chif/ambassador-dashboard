@@ -177,6 +177,34 @@ export const useProductsStore = defineStore('products', () => {
       reader.onerror = () => reject(new Error('Failed to read file'));
     });
   };
+  const rateProduct = async (productId: string, rating: number) => {
+    loading.value = true;
+    try {
+      // 1. Get current product to calculate new average
+      // We use the local state which is synced with Firestore
+      const product = products.value.find((p) => p.id === productId);
+      if (!product) throw new Error('Product not found');
+
+      const currentCount = product.ratingCount || 0;
+      const currentAvg = product.ratingAverage || 0;
+
+      const newCount = currentCount + 1;
+      const newAvg = (currentAvg * currentCount + rating) / newCount;
+
+      const docRef = doc(db, 'products', productId);
+      await updateDoc(docRef, {
+        ratingAverage: Number(newAvg.toFixed(2)), // Keep 2 decimals
+        ratingCount: newCount,
+      });
+
+      logger.info('Product rated', { id: productId, rating, newAvg });
+    } catch (error: unknown) {
+      logger.error('Error rating product', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
 
   return {
     products,
@@ -188,5 +216,6 @@ export const useProductsStore = defineStore('products', () => {
     deleteProduct,
     updateProductOrder,
     uploadProductImage,
+    rateProduct,
   };
 });

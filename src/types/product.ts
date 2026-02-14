@@ -9,4 +9,7 @@ export interface Product {
   originalPrice?: number;
   externalUrl?: string;
   order?: number;
+  instructions?: string;
+  ratingAverage?: number;
+  ratingCount?: number;
 }

@@ -16,6 +16,12 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
+    // Articles: Public Read, Auth Write
+    match /articles/{articleId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
     // Ambassadors Profile: Public Read, Auth Write (for now)
     match /ambassadors/{ambassadorId} {
       allow read: if true;

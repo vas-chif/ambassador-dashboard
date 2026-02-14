@@ -28,6 +28,7 @@ const newProduct = ref<Partial<Product>>({
   price: 0,
   category: '',
   description: '',
+  instructions: '',
   images: [],
   externalUrl: '',
 });
@@ -45,6 +46,7 @@ watch(
           price: 0,
           category: '',
           description: '',
+          instructions: '',
           images: [],
           externalUrl: '',
         };
@@ -73,7 +75,14 @@ const saveProduct = async () => {
 
     emit('save', { ...newProduct.value });
     // Reset form
-    newProduct.value = { name: '', price: 0, category: '', description: '', images: [] };
+    newProduct.value = {
+      name: '',
+      price: 0,
+      category: '',
+      description: '',
+      instructions: '',
+      images: [],
+    };
     imageFile.value = null;
     emit('update:modelValue', false);
   } catch (error: unknown) {
@@ -196,6 +205,26 @@ const saveProduct = async () => {
                   :toolbar="[
                     ['bold', 'italic', 'underline', 'strike'],
                     ['hr', 'link'],
+                  ]"
+                >
+                </q-editor>
+              </div>
+
+              <div>
+                <div class="text-subtitle2 q-mb-sm text-grey-8">
+                  Product Instructions (Dialog Only)
+                </div>
+                <q-editor
+                  :model-value="newProduct.instructions || ''"
+                  @update:model-value="(val) => (newProduct.instructions = val)"
+                  min-height="8rem"
+                  placeholder="Detailed instructions, usage tips, etc..."
+                  class="bg-white"
+                  :content-style="{ fontSize: '14px' }"
+                  :toolbar="[
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['hr', 'link'],
+                    ['unordered', 'ordered'],
                   ]"
                 >
                 </q-editor>

@@ -39,17 +39,7 @@ onUnmounted(() => {
       <!-- Social Media Links (Left) -->
       <div class="row items-center q-gutter-sm text-caption">
         <div>Contatti:</div>
-        <q-btn
-          v-if="settings.profile.email"
-          round
-          flat
-          color="white"
-          icon="email"
-          @click="showContactDialog = true"
-          size="sm"
-        >
-          <q-tooltip>Email</q-tooltip>
-        </q-btn>
+
         <q-btn
           v-if="settings.profile.whatsapp"
           round
@@ -64,17 +54,49 @@ onUnmounted(() => {
           <q-tooltip>WhatsApp</q-tooltip>
         </q-btn>
         <q-btn
+          v-if="settings.profile.tiktok"
+          round
+          flat
+          color="white"
+          icon="fa-brands fa-tiktok"
+          type="a"
+          :href="
+            settings.profile.tiktok.startsWith('http')
+              ? settings.profile.tiktok
+              : 'https://tiktok.com/@' + settings.profile.tiktok.replace('@', '')
+          "
+          target="_blank"
+          size="sm"
+        >
+          <q-tooltip>TikTok</q-tooltip>
+        </q-btn>
+        <q-btn
           v-if="settings.profile.instagram"
           round
           flat
           color="white"
           icon="fa-brands fa-instagram"
           type="a"
-          :href="settings.profile.instagram"
+          :href="
+            settings.profile.instagram.startsWith('http')
+              ? settings.profile.instagram
+              : 'https://instagram.com/' + settings.profile.instagram.replace('@', '')
+          "
           target="_blank"
           size="sm"
         >
           <q-tooltip>Instagram</q-tooltip>
+        </q-btn>
+        <q-btn
+          v-if="settings.profile.email"
+          round
+          flat
+          color="white"
+          icon="email"
+          @click="showContactDialog = true"
+          size="sm"
+        >
+          <q-tooltip>Email</q-tooltip>
         </q-btn>
       </div>
 
