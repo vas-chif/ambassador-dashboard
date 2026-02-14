@@ -139,7 +139,7 @@ onMounted(() => {
                 e integrazione personalizzata
               </div>
             </div>
-            <div class="banner-image">
+            <div class="banner-image q-pr-lg">
               <q-avatar size="100px" class="shadow-8">
                 <q-btn
                   color="primary"
@@ -210,16 +210,16 @@ onMounted(() => {
 
 @media (max-width: 600px) {
   .action-pill-banner {
-    border-radius: 30px;
+    border-radius: 25px;
     padding: 12px !important;
   }
   .banner-text .text-h6 {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
   }
   .banner-image .q-avatar {
-    size: 70px !important;
-    width: 70px !important;
-    height: 70px !important;
+    size: 85px !important;
+    width: 85px !important;
+    height: 85px !important;
   }
 }
 </style>
