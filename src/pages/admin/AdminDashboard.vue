@@ -2,44 +2,36 @@
 import { computed, onMounted } from 'vue';
 import { useProductsStore } from 'stores/products';
 import { useSettingsStore } from 'stores/settings';
+import { useRouter } from 'vue-router';
+import { ADMIN_NAV_ITEMS } from 'src/shared/navigation';
 
 const productStore = useProductsStore();
 const settingsStore = useSettingsStore();
 
 onMounted(() => {
   productStore.subscribeToProducts();
+  settingsStore.subscribeToArticles();
   // In a real app, you would fetch orders/sales from an Orders store
 });
 
 const kpiData = computed(() => {
-  return [
-    {
-      label: 'Total Sales',
-      value: '€ 0.00',
-      icon: 'payments',
-      color: 'green',
-      caption: 'Requires "Orders" module',
-    },
-    {
-      label: 'Profile Status',
-      value: settingsStore.profile.name ? 'Active' : 'Incomplete',
-      icon: 'verified_user',
-      color: 'blue',
-    },
-    {
-      label: 'Color Theme',
-      value: settingsStore.profile.primaryColor,
-      icon: 'palette',
-      color: 'orange',
-    },
-    {
-      label: 'Products',
-      value: productStore.products.length,
-      icon: 'inventory_2',
-      color: 'purple',
-    },
-  ];
+  return ADMIN_NAV_ITEMS.filter((it) => it.to !== '/admin/dashboard').map((it) => {
+    let value: string | number = '...';
+
+    if (it.to === '/admin/products') value = productStore.products.length;
+    if (it.to === '/admin/articles') value = settingsStore.articles.length;
+    if (it.to === '/admin/settings') value = settingsStore.profile.name ? 'Active' : 'Configure';
+    if (it.to === '/admin/ambassadors') value = 'Manage';
+
+    return { ...it, value };
+  });
 });
+
+const router = useRouter();
+
+const navigateTo = (path: string) => {
+  void router.push(path);
+};
 
 const notifications = [
   { id: 1, message: 'Welcome to your new dashboard!', time: 'Now' },
@@ -72,18 +64,25 @@ const notifications = [
 
     <div class="row q-col-gutter-md">
       <div v-for="kpi in kpiData" :key="kpi.label" class="col-12 col-sm-6 col-md-3">
-        <q-card class="q-pa-sm full-height">
+        <q-card
+          class="q-pa-sm full-height cursor-pointer hover-card shadow-1"
+          @click="navigateTo(kpi.to)"
+          v-ripple
+        >
           <q-item>
             <q-item-section avatar>
               <q-avatar :icon="kpi.icon" :color="kpi.color" text-color="white" />
             </q-item-section>
 
             <q-item-section>
-              <q-item-label class="text-grey">{{ kpi.label }}</q-item-label>
-              <q-item-label class="text-h6">{{ kpi.value }}</q-item-label>
-              <q-item-label caption v-if="kpi.caption" class="text-orange">{{
-                kpi.caption
-              }}</q-item-label>
+              <q-item-label class="text-grey-7 text-uppercase text-weight-bold" style="font-size: 0.7rem">
+                {{ kpi.label }}
+              </q-item-label>
+              <q-item-label class="text-h6 text-weight-bold">{{ kpi.value }}</q-item-label>
+            </q-item-section>
+
+            <q-item-section side>
+              <q-icon name="chevron_right" color="grey-4" />
             </q-item-section>
           </q-item>
         </q-card>

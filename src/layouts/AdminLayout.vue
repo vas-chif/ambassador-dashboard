@@ -11,6 +11,8 @@ import { ref } from 'vue';
 import { useAuthStore } from 'stores/auth';
 import { useRouter } from 'vue-router';
 
+import { ADMIN_NAV_ITEMS } from 'src/shared/navigation';
+
 const leftDrawerOpen = ref(false);
 const authStore = useAuthStore();
 const router = useRouter();
@@ -24,13 +26,7 @@ const logout = async () => {
   await router.push('/admin/login');
 };
 
-const menuItems = [
-  { icon: 'dashboard', label: 'Dashboard', to: '/admin/dashboard' },
-  { icon: 'people', label: 'Ambassadors', to: '/admin/ambassadors' },
-  { icon: 'inventory_2', label: 'Products', to: '/admin/products' },
-  { icon: 'article', label: 'Articles', to: '/admin/articles' },
-  { icon: 'settings', label: 'Settings', to: '/admin/settings' },
-];
+const menuItems = ADMIN_NAV_ITEMS;
 </script>
 
 <template>
