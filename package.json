@@ -19,7 +19,6 @@
     "@emailjs/browser": "^4.4.1",
     "@quasar/extras": "^1.16.4",
     "@vueuse/core": "^14.2.0",
-    "axios": "^1.2.1",
     "clsx": "^2.1.1",
     "firebase": "^12.9.0",
     "lucide-vue-next": "^0.563.0",

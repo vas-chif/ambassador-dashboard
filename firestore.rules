@@ -10,6 +10,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Users: Public Read (to check if any admin exists), Authenticated Create/Read (own profile)
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Products: Public Read, Auth Write
     match /products/{productId} {
       allow read: if true;
@@ -22,7 +29,7 @@ service cloud.firestore {
       allow write: if isAuthenticated();
     }
 
-    // Ambassadors Profile: Public Read, Auth Write (for now)
+    // Ambassadors Profile: Public Read, Auth Write
     match /ambassadors/{ambassadorId} {
       allow read: if true;
       allow write: if isAuthenticated();

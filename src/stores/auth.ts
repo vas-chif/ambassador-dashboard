@@ -3,7 +3,7 @@
  * @description Authentication store managing user session and roles.
  * @author Vasile Chifeac (AI Agent)
  * @created 2026-02-06
- * @modified 2026-02-06
+ * @modified 2026-04-08
  *
  * @dependencies
  * - pinia
@@ -19,6 +19,7 @@ import {
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { useSecureLogger } from 'src/shared/logger';
 
@@ -67,6 +68,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const sendPasswordReset = async (email: string): Promise<void> => {
+    loading.value = true;
+    try {
+      await sendPasswordResetEmail(auth, email);
+      logger.info('Password reset email sent', { email });
+    } catch (error: unknown) {
+      logger.error('Password reset failed', error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const isAuthenticated = computed(() => !!user.value);
   const isAdmin = computed(() => {
     // Basic check, ideally checks custom claims
@@ -83,6 +97,7 @@ export const useAuthStore = defineStore('auth', () => {
     init,
     login,
     logout,
+    sendPasswordReset,
     isAuthenticated,
     isAdmin,
   };

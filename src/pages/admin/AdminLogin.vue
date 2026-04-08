@@ -5,7 +5,7 @@
         <q-card square class="shadow-24" style="width: 320px; min-height: 520px">
           <q-card-section class="bg-deep-purple-7 relative-position">
             <h4 class="text-h5 text-white q-my-md">
-              {{ isRegistering ? 'Register Admin' : 'Admin Login' }}
+              {{ mode === 'register' ? 'Register Admin' : mode === 'forgot' ? 'Recover Password' : 'Admin Login' }}
             </h4>
           </q-card-section>
           <q-card-section>
@@ -23,6 +23,7 @@
                 </template>
               </q-input>
               <q-input
+                v-if="mode !== 'forgot'"
                 square
                 clearable
                 v-model="password"
@@ -43,7 +44,7 @@
               </q-input>
 
               <q-input
-                v-if="isRegistering"
+                v-if="mode === 'register'"
                 square
                 clearable
                 v-model="confirmPassword"
@@ -66,7 +67,7 @@
               size="lg"
               color="deep-purple-4"
               class="full-width text-white"
-              :label="isRegistering ? 'Register' : 'Sign In'"
+              :label="mode === 'register' ? 'Register' : mode === 'forgot' ? 'Send Reset Email' : 'Sign In'"
               :loading="loading"
               @click="handleSubmit"
             />
@@ -74,14 +75,36 @@
 
           <q-card-section class="text-center q-pa-sm">
             <q-btn
+              v-if="mode !== 'forgot' && (mode === 'register' || canRegister)"
               flat
               size="sm"
               color="grey-7"
               class="full-width"
               :label="
-                isRegistering ? 'Already have an account? Login' : 'Need an account? Register'
+                mode === 'register' ? 'Already have an account? Login' : 'Need an account? Register'
               "
               @click="toggleMode"
+            />
+            <q-btn
+              v-else-if="mode === 'forgot'"
+              flat
+              size="sm"
+              color="grey-7"
+              class="full-width"
+              label="Back to Login"
+              icon="arrow_back"
+              @click="mode = 'login'"
+            />
+          </q-card-section>
+
+          <q-card-section class="text-center q-pt-none q-pb-md">
+            <q-btn
+              v-if="mode === 'login'"
+              flat
+              size="xs"
+              color="deep-purple-3"
+              label="Forgot password?"
+              @click="mode = 'forgot'"
             />
           </q-card-section>
         </q-card>
@@ -96,38 +119,95 @@ import { useAuthStore } from 'stores/auth';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from 'src/boot/firebase';
+import { collection, getDocs, limit, query, doc, setDoc } from 'firebase/firestore';
+import { auth, db } from 'src/boot/firebase';
+import { useSecureLogger } from 'src/shared/logger';
+import { onMounted } from 'vue';
+
+type AuthMode = 'login' | 'register' | 'forgot';
 
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const errorMsg = ref('');
-const isRegistering = ref(false);
+const mode = ref<AuthMode>('login');
 const isPasswordVisible = ref(false);
 const loading = ref(false);
+const canRegister = ref(false);
 
 const authStore = useAuthStore();
 const router = useRouter();
 const $q = useQuasar();
+const logger = useSecureLogger();
+
+onMounted(async () => {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, limit(1));
+    const snapshot = await getDocs(q);
+    canRegister.value = snapshot.empty;
+  } catch (err) {
+    logger.error('Error checking user existence', err);
+    // Default to false for security if we can't check
+    canRegister.value = false;
+  }
+});
 
 const toggleMode = () => {
-  isRegistering.value = !isRegistering.value;
+  mode.value = mode.value === 'register' ? 'login' : 'register';
   errorMsg.value = '';
   confirmPassword.value = '';
+};
+
+const handlePasswordReset = async () => {
+  if (!email.value) {
+    errorMsg.value = 'Please enter your email address first.';
+    return;
+  }
+  loading.value = true;
+  try {
+    await authStore.sendPasswordReset(email.value);
+    $q.notify({ type: 'positive', message: 'Reset email sent! Check your inbox.', icon: 'mail' });
+    mode.value = 'login';
+  } catch (err: unknown) {
+    logger.error('Password reset error in component', err);
+    if (err instanceof Error) {
+      errorMsg.value = err.message;
+    } else {
+      errorMsg.value = 'Failed to send reset email.';
+    }
+    $q.notify({ type: 'negative', message: 'Reset failed' });
+  } finally {
+    loading.value = false;
+  }
 };
 
 const handleSubmit = async () => {
   errorMsg.value = '';
   loading.value = true;
 
+  if (mode.value === 'forgot') {
+    await handlePasswordReset();
+    return;
+  }
+
   try {
-    if (isRegistering.value) {
+    if (mode.value === 'register') {
       if (password.value !== confirmPassword.value) {
         errorMsg.value = 'Passwords do not match.';
         loading.value = false;
         return;
       }
-      await createUserWithEmailAndPassword(auth, email.value, password.value);
+      const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+      const user = userCredential.user;
+
+      // Create a user document to flag that an admin exists
+      await setDoc(doc(db, 'users', user.uid), {
+        email: user.email,
+        role: 'admin',
+        createdAt: Date.now(),
+      });
+
       $q.notify({ type: 'positive', message: 'Account created! Welcome.' });
       // Auto login handled by auth state listener or specific logic if needed
       await router.push('/admin/dashboard');
@@ -137,7 +217,7 @@ const handleSubmit = async () => {
       await router.push('/admin/dashboard');
     }
   } catch (err: unknown) {
-    console.error(err);
+    logger.error('Auth submit failed', err);
     if (err instanceof Error) {
       errorMsg.value = err.message;
     } else {
