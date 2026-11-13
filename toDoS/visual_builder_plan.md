@@ -164,7 +164,7 @@
     - **Titolo dell'Articolo / Trattamento** (tipografia serif di prestigio `Playfair Display`).
     - **Descrizione Completa & Storia** (leggibile, senza clamping aggressivi che tagliano il testo).
     - **Pulsante CTA d'Azione WhatsApp / Scopri di Più** ben visibile e centrato.
-    - **Miniature Galleria di Navigazione** posizionate in calce per navigare istantaneamente tra le storie con indicatore attivo evidenziato.
+    - **Miniature Galleria di Navigazione** posizionate subito sotto la foto principale (e prima del testo) per un'esplorazione tattile immediata, lasciando il pulsante CTA d'azione in calce come punto di conversione finale.
   - [x] **Sincronizzazione Reattiva Istantanea**: Quando la slide cambia (autoplay o interazione utente), il testo sottostante si aggiorna all'istante con transizione fluida (*smooth fade*).
 - [x] **10.3 Adattabilità Universale Desktop & Mobile**:
   - [x] Layout identico, armonioso e privo di frammentazione tra smartphone, tablet e monitor widescreen.
