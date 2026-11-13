@@ -291,5 +291,20 @@
   - [x] `yarn build`: SPA compilata con successo.
 
 ---
+
+### 📱 FASE 16: Widget Dashboard QR Code Rapidi per Scansione, Stampa e Download
+- [x] **16.1 Componente Modulare `QuickQrCodesWidget.vue` ([src/components/admin/QuickQrCodesWidget.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/QuickQrCodesWidget.vue))**:
+  - [x] Visualizzazione a schede/griglia con anteprima nitida di tutti i QR Code caricati nel profilo.
+  - [x] Clic e ingrandimento immediato a schermo intero ad alta risoluzione con guida visiva per far inquadrare direttamente dallo smartphone del cliente.
+  - [x] Pulsanti rapidi:
+    - 📥 **Download PNG** ad alta risoluzione con nome file dedicato.
+    - 🖨️ **Stampa Rapida** con finestra di anteprima e impaginazione etichetta/cartello da banco.
+    - 🔗 **Copia Link URL** negli appunti con feedback toast.
+  - [x] Stato vuoto dedicato con invito e pulsante di collegamento alla tab Impostazioni.
+- [x] **16.2 Integrazione in Dashboard Principale ([src/pages/admin/AdminDashboard.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminDashboard.vue))**:
+  - [x] Sottoscrizione in tempo reale a `settingsStore.subscribeToProfile()`.
+  - [x] Layout pulito e arioso posizionato subito sotto i contatori KPI principali.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
