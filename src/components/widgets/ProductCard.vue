@@ -23,6 +23,7 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'open-detail', product: Product): void;
   (e: 'edit-product', product: Product): void;
+  (e: 'duplicate-product', product: Product): void;
   (e: 'toggle-like', product: Product): void;
   (e: 'toggle-save', product: Product): void;
   (e: 'move-prev', index: number): void;
@@ -104,6 +105,19 @@ const $q = useQuasar();
           </q-btn>
 
           <q-separator vertical dark class="q-mx-xs" style="height: 14px" />
+
+          <!-- Duplicate Product Button -->
+          <q-btn
+            flat
+            dense
+            round
+            size="xs"
+            icon="content_copy"
+            color="secondary"
+            @click.stop="emit('duplicate-product', product)"
+          >
+            <q-tooltip>Duplica questo prodotto</q-tooltip>
+          </q-btn>
 
           <!-- Quick Edit Product Button -->
           <q-btn
@@ -275,3 +289,4 @@ const $q = useQuasar();
   margin: 1rem 0;
 }
 </style>
+

@@ -219,6 +219,30 @@ const openEditArticle = (article: Article) => {
   showArticleDialog.value = true;
 };
 
+const handleDuplicateArticle = async (article: Article) => {
+  try {
+    const clone: Partial<Article> = { ...article };
+    delete clone.id;
+    await settingsStore.addArticle({
+      ...clone,
+      title: `${article.title} (Copia)`,
+      order: (settingsStore.articles || []).length,
+    } as Omit<Article, 'id'>);
+    $q.notify({
+      type: 'positive',
+      message: `Articolo "${article.title}" duplicato con successo!`,
+      icon: 'content_copy',
+      timeout: 1500,
+    });
+  } catch (error) {
+    logger.error('Error duplicating article', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Errore durante la duplicazione dell\'articolo',
+    });
+  }
+};
+
 const openEditProduct = (product: Product) => {
   selectedProduct.value = { ...product };
   showProductDialog.value = true;
@@ -501,6 +525,7 @@ onMounted(() => {
             :filter-type="getCustomSectionConfig(section).articleFilterType || 'all'"
             :section-id="section"
             @edit-article="openEditArticle"
+            @duplicate-article="handleDuplicateArticle"
           />
         </div>
 

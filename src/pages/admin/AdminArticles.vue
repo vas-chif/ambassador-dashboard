@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useSettingsStore } from 'stores/settings';
 import type { Article } from 'stores/settings';
 import { useQuasar } from 'quasar';
@@ -8,6 +8,23 @@ import ArticleFormDialog from 'components/admin/ArticleFormDialog.vue';
 
 const store = useSettingsStore();
 const $q = useQuasar();
+
+// Search & Filter State
+const searchQuery = ref('');
+const selectedType = ref<'all' | 'testimonial' | 'product'>('all');
+
+const filteredArticles = computed(() => {
+  return (store.articles || []).filter((art) => {
+    const q = searchQuery.value.trim().toLowerCase();
+    const matchesQuery =
+      !q ||
+      art.title.toLowerCase().includes(q) ||
+      (art.description && art.description.toLowerCase().includes(q));
+    const artType = art.layoutConfig?.articleType || 'testimonial';
+    const matchesType = selectedType.value === 'all' || artType === selectedType.value;
+    return matchesQuery && matchesType;
+  });
+});
 
 // --- ARTICLES LOGIC --- //
 const showArticleDialog = ref(false);
@@ -21,6 +38,26 @@ const openAddArticle = () => {
 const openEditArticle = (article: Article) => {
   selectedArticle.value = { ...article };
   showArticleDialog.value = true;
+};
+
+const duplicateArticle = async (article: Article) => {
+  try {
+    const clone: Partial<Article> = { ...article };
+    delete clone.id;
+    await store.addArticle({
+      ...clone,
+      title: `${article.title} (Copia)`,
+      order: (store.articles || []).length,
+    } as Omit<Article, 'id'>);
+    $q.notify({
+      type: 'positive',
+      message: `Articolo "${article.title}" duplicato con successo!`,
+      icon: 'content_copy',
+    });
+  } catch (e) {
+    console.error(e);
+    $q.notify({ type: 'negative', message: 'Errore durante la duplicazione dell\'articolo' });
+  }
 };
 
 const confirmDeleteArticle = (article: Article) => {
@@ -79,9 +116,67 @@ onUnmounted(() => {
       <q-btn color="primary" icon="add" label="Add Article" @click="openAddArticle" size="lg" />
     </div>
 
+    <!-- Search & Category Filter Bar -->
+    <div v-if="store.articles && store.articles.length > 0" class="row items-center q-col-gutter-sm q-mb-lg">
+      <div class="col-12 col-md-6">
+        <q-input
+          v-model="searchQuery"
+          dense
+          outlined
+          clearable
+          placeholder="Cerca per titolo o descrizione..."
+        >
+          <template #prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
+
+      <div class="col-12 col-md-6 row items-center q-gutter-xs">
+        <q-btn
+          unelevated
+          rounded
+          no-caps
+          size="sm"
+          :color="selectedType === 'all' ? 'primary' : 'grey-3'"
+          :text-color="selectedType === 'all' ? 'white' : 'grey-9'"
+          class="text-weight-bold q-px-md"
+          @click="selectedType = 'all'"
+        >
+          Tutti ({{ (store.articles || []).length }})
+        </q-btn>
+        <q-btn
+          unelevated
+          rounded
+          no-caps
+          size="sm"
+          :color="selectedType === 'testimonial' ? 'primary' : 'grey-3'"
+          :text-color="selectedType === 'testimonial' ? 'white' : 'grey-9'"
+          icon="photo_camera_front"
+          class="text-weight-bold q-px-md"
+          @click="selectedType = 'testimonial'"
+        >
+          Testimonianze
+        </q-btn>
+        <q-btn
+          unelevated
+          rounded
+          no-caps
+          size="sm"
+          :color="selectedType === 'product' ? 'primary' : 'grey-3'"
+          :text-color="selectedType === 'product' ? 'white' : 'grey-9'"
+          icon="sanitizer"
+          class="text-weight-bold q-px-md"
+          @click="selectedType = 'product'"
+        >
+          Schede Prodotto
+        </q-btn>
+      </div>
+    </div>
+
     <!-- Article Grid -->
-    <div v-if="store.articles && store.articles.length > 0" class="row q-col-gutter-md">
-      <div v-for="article in store.articles" :key="article.id" class="col-12 col-md-6 col-lg-4">
+    <div v-if="filteredArticles.length > 0" class="row q-col-gutter-md">
+      <div v-for="article in filteredArticles" :key="article.id" class="col-12 col-md-6 col-lg-4">
         <q-card
           bordered
           flat
@@ -118,6 +213,9 @@ onUnmounted(() => {
             >
               <q-tooltip>{{ article.active ? 'Hide' : 'Show' }}</q-tooltip>
             </q-btn>
+            <q-btn flat round icon="content_copy" color="secondary" @click="duplicateArticle(article)">
+              <q-tooltip>Duplica Articolo</q-tooltip>
+            </q-btn>
             <q-btn flat round icon="edit" color="primary" @click="openEditArticle(article)">
               <q-tooltip>Edit</q-tooltip>
             </q-btn>
@@ -127,6 +225,17 @@ onUnmounted(() => {
           </q-card-actions>
         </q-card>
       </div>
+    </div>
+
+    <!-- Empty Search State -->
+    <div
+      v-else-if="store.articles && store.articles.length > 0 && filteredArticles.length === 0"
+      class="column flex-center q-pa-xl text-grey bg-grey-1 rounded-borders dashed-border text-center"
+    >
+      <q-icon name="search_off" size="4rem" color="grey-5" class="q-mb-sm" />
+      <div class="text-h6">Nessun articolo trovato</div>
+      <div class="text-caption q-mb-md">Prova a modificare i criteri di ricerca o seleziona una tipologia diversa.</div>
+      <q-btn outline color="primary" label="Reimposta Filtri" @click="searchQuery = ''; selectedType = 'all'" />
     </div>
 
     <!-- Empty State -->

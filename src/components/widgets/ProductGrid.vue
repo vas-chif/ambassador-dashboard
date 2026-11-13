@@ -85,6 +85,31 @@ const handleToggleSave = async (prod: Product) => {
   }
 };
 
+const handleDuplicateProduct = async (product: Product) => {
+  try {
+    const clone: Partial<Product> = { ...product };
+    delete clone.id;
+    await store.addProduct({
+      ...clone,
+      name: `${product.name} (Copia)`,
+      order: store.products.length,
+      likesCount: 0,
+      savesCount: 0,
+    });
+    $q.notify({
+      type: 'positive',
+      message: `Prodotto "${product.name}" duplicato con successo!`,
+      icon: 'content_copy',
+      timeout: 1500,
+    });
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'Errore durante la duplicazione del prodotto',
+    });
+  }
+};
+
 // Drag and drop reordering
 const handleDragStart = (idx: number, event: DragEvent) => {
   draggedIndex.value = idx;
@@ -268,6 +293,7 @@ const moveProduct = async (idx: number, direction: 'prev' | 'next') => {
           :is-drag-over="dragOverIndex === index"
           @open-detail="openDetailDialog"
           @edit-product="emit('edit-product', $event)"
+          @duplicate-product="handleDuplicateProduct"
           @toggle-like="handleToggleLike"
           @toggle-save="handleToggleSave"
           @move-prev="moveProduct($event, 'prev')"

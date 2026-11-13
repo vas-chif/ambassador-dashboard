@@ -6,12 +6,14 @@
  * @created 2026-02-06
  */
 
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useProductsStore } from 'stores/products';
 import draggable from 'vuedraggable';
 import type { Product } from 'src/types/product';
+import { useQuasar } from 'quasar';
 
 const store = useProductsStore();
+const $q = useQuasar();
 
 onMounted(() => {
   store.subscribeToProducts();
@@ -21,17 +23,38 @@ onUnmounted(() => {
   store.unsubscribeFromProducts();
 });
 
-const emit = defineEmits(['edit', 'delete']);
+const emit = defineEmits(['edit', 'duplicate', 'delete']);
 
-import { useQuasar } from 'quasar';
-const $q = useQuasar();
+// Search & Filter State
+const searchQuery = ref('');
+const selectedCategory = ref<string>('all');
+
+const availableCategories = computed(() => {
+  const cats = store.products.map((p) => p.category).filter(Boolean);
+  return ['all', ...Array.from(new Set(cats))];
+});
+
+const isFiltering = computed(() => !!searchQuery.value.trim() || selectedCategory.value !== 'all');
+
+const filteredProducts = computed(() => {
+  return store.products.filter((p) => {
+    const q = searchQuery.value.trim().toLowerCase();
+    const matchesSearch =
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      (p.description && p.description.toLowerCase().includes(q));
+    const matchesCategory =
+      selectedCategory.value === 'all' || p.category === selectedCategory.value;
+    return matchesSearch && matchesCategory;
+  });
+});
 
 // Use a ref for draggable products to allow visual reordering
 const draggableProducts = ref<Product[]>([]);
 
-// Sync with store
+// Sync with filtered store products
 watch(
-  () => store.products,
+  filteredProducts,
   (newProducts) => {
     draggableProducts.value = [...newProducts];
   },
@@ -87,6 +110,47 @@ const confirmDelete = (product: Product) => {
       Loading products...
     </q-banner>
 
+    <!-- Search & Category Filters -->
+    <div class="row items-center q-col-gutter-sm q-mb-md">
+      <!-- Search Input -->
+      <div class="col-12 col-sm-7 col-md-8">
+        <q-input
+          v-model="searchQuery"
+          dense
+          outlined
+          clearable
+          placeholder="Cerca prodotto per nome o descrizione..."
+        >
+          <template #prepend>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="col-12 col-sm-5 col-md-4">
+        <q-select
+          v-model="selectedCategory"
+          :options="availableCategories"
+          dense
+          outlined
+          emit-value
+          map-options
+          :display-value="selectedCategory === 'all' ? 'Tutte le Categorie' : selectedCategory"
+        >
+          <template #prepend>
+            <q-icon name="filter_list" />
+          </template>
+        </q-select>
+      </div>
+    </div>
+
+    <!-- Drag Reorder Notice -->
+    <div v-if="isFiltering" class="text-caption text-orange-9 q-mb-sm">
+      <q-icon name="info" class="q-mr-xs" />
+      Filtro attivo: per modificare l'ordine dei prodotti tramite trascinamento, reimposta i filtri su tutti i prodotti.
+    </div>
+
     <table class="product-table">
       <thead>
         <tr>
@@ -140,19 +204,45 @@ const confirmDelete = (product: Product) => {
               </div>
             </td>
             <td class="text-center">
-              <q-btn flat round color="primary" icon="edit" size="sm" @click="emit('edit', row)" />
-              <q-btn
-                flat
-                round
-                color="negative"
-                icon="delete"
-                size="sm"
-                @click="confirmDelete(row)"
-              />
+              <div class="row items-center justify-center no-wrap q-gutter-x-xs">
+                <q-btn
+                  flat
+                  round
+                  color="secondary"
+                  icon="content_copy"
+                  size="sm"
+                  @click="emit('duplicate', row)"
+                >
+                  <q-tooltip>Duplica Prodotto</q-tooltip>
+                </q-btn>
+                <q-btn flat round color="primary" icon="edit" size="sm" @click="emit('edit', row)">
+                  <q-tooltip>Modifica Prodotto</q-tooltip>
+                </q-btn>
+                <q-btn
+                  flat
+                  round
+                  color="negative"
+                  icon="delete"
+                  size="sm"
+                  @click="confirmDelete(row)"
+                >
+                  <q-tooltip>Elimina Prodotto</q-tooltip>
+                </q-btn>
+              </div>
             </td>
           </tr>
         </template>
       </draggable>
+
+      <!-- Empty State -->
+      <tbody v-if="draggableProducts.length === 0">
+        <tr>
+          <td colspan="6" class="text-center q-pa-lg text-grey-7">
+            <q-icon name="search_off" size="32px" color="grey-5" class="q-mb-xs block mx-auto" />
+            Nessun prodotto trovato per i criteri di ricerca selezionati.
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </template>

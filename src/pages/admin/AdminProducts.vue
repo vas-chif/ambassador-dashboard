@@ -41,6 +41,28 @@ const handleDelete = (product: Product) => {
     });
 };
 
+const handleDuplicate = async (product: Product) => {
+  try {
+    const clone: Partial<Product> = { ...product };
+    delete clone.id;
+    await store.addProduct({
+      ...clone,
+      name: `${product.name} (Copia)`,
+      order: store.products.length,
+      likesCount: 0,
+      savesCount: 0,
+    });
+    $q.notify({
+      type: 'positive',
+      message: `Prodotto "${product.name}" duplicato con successo!`,
+      icon: 'content_copy',
+    });
+  } catch (error: unknown) {
+    console.error(error);
+    $q.notify({ type: 'negative', message: 'Errore durante la duplicazione del prodotto' });
+  }
+};
+
 const handleSave = async (productData: Partial<Product>) => {
   try {
     if (editingProduct.value) {
@@ -71,7 +93,11 @@ const handleSave = async (productData: Partial<Product>) => {
     </div>
 
     <!-- Product Table -->
-    <ProductListTable @edit="handleEdit" @delete="handleDelete" />
+    <ProductListTable
+      @edit="handleEdit"
+      @duplicate="handleDuplicate"
+      @delete="handleDelete"
+    />
 
     <!-- Add Product Wizard/Dialog -->
     <ProductFormDialog v-model="showAddDialog" :initial-data="editingProduct" @save="handleSave" />

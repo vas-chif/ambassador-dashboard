@@ -19,6 +19,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'edit-article', article: Article): void;
+  (e: 'duplicate-article', article: Article): void;
 }>();
 
 const store = useSettingsStore();
@@ -80,25 +81,40 @@ const getButtonJustifyClass = (article: Article) => {
   <div v-if="articles.length > 0" class="article-showcase-section full-width q-mb-xl">
     <!-- 1. FULL-WIDTH TOP IMAGE CAROUSEL (Edge-to-Edge Showcase) -->
     <div class="carousel-full-width-wrapper relative-position full-width overflow-hidden">
-      <!-- In-Place Quick Edit Current Article (Preview Mode Only) -->
+      <!-- In-Place Quick Edit & Duplicate Current Article (Preview Mode Only) -->
       <div
         v-if="isPreview && currentArticle"
         class="carousel-quick-edit-action absolute-top-right"
         style="top: 54px; right: 16px; z-index: 70"
       >
-        <q-btn
-          unelevated
-          color="primary"
-          text-color="white"
-          icon="edit"
-          label="Modifica Articolo"
-          class="shadow-4 text-caption text-weight-bold q-px-sm"
-          size="sm"
-          no-caps
-          @click.stop="emit('edit-article', currentArticle)"
-        >
-          <q-tooltip>Modifica foto, testi o link dell'articolo visibile</q-tooltip>
-        </q-btn>
+        <q-btn-group rounded class="shadow-4">
+          <q-btn
+            unelevated
+            color="primary"
+            text-color="white"
+            icon="edit"
+            label="Modifica"
+            class="text-caption text-weight-bold q-px-sm"
+            size="sm"
+            no-caps
+            @click.stop="emit('edit-article', currentArticle)"
+          >
+            <q-tooltip>Modifica foto, testi o link dell'articolo visibile</q-tooltip>
+          </q-btn>
+          <q-btn
+            unelevated
+            color="secondary"
+            text-color="white"
+            icon="content_copy"
+            label="Duplica"
+            class="text-caption text-weight-bold q-px-sm"
+            size="sm"
+            no-caps
+            @click.stop="emit('duplicate-article', currentArticle)"
+          >
+            <q-tooltip>Duplica questo articolo visibile nel carosello</q-tooltip>
+          </q-btn>
+        </q-btn-group>
       </div>
 
       <q-carousel
