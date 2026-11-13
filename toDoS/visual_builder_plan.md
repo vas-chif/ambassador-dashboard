@@ -238,5 +238,41 @@
   - `yarn build`: compilazione SPA completata con successo in 13.79s.
 
 ---
+
+### 📦 FASE 13: Pillola Azioni Rapide Prodotti & Drag-and-Drop In-Place (§0.2 / §0.3)
+- [x] **13.1 Pillola Fluttuante sulle Card Prodotto (`[ ⠿ | ⬅️ ➡️ | ✏️ ]`)**:
+  - [x] Attiva solo in modalità `preview_mode=true` nell'angolo superiore destro di ciascuna card.
+  - [x] Spostamento rapido ⬅️ / ➡️ con un solo clic.
+  - [x] Maniglia di trascinamento nativa (HTML5 Drag & Drop) con highlight visivo border/glow all'hover target.
+  - [x] Tasto Modifica rapida ✏️ che precarica direttamente il modale `ProductFormDialog.vue`.
+- [x] **13.2 Decomposizione Modulare Anti-Monolite**:
+  - [x] Estrazione di `src/components/widgets/ProductDetailDialog.vue` (236 righe).
+  - [x] Estrazione di `src/components/widgets/ProductCard.vue` (277 righe).
+  - [x] Snellezza di `ProductGrid.vue` a 295 righe (rispetta la soglia massima di ≤ 350 righe di §0.3).
+- [x] **13.3 Aggiornamento Atomico Ordinamento su Firestore**:
+  - [x] Metodo `updateProductsOrder(orderedProducts)` con aggiornamento locale ottimistico immediato e batch su Firestore.
+
+---
+
+### ❤️ FASE 14: Contatori Globali Firestore (Likes & Saves), Filtri Utente & Statistiche Admin
+- [x] **14.1 Contatori Atomici su Cloud Firestore**:
+  - [x] Estensione del modello dati `Product` con `likesCount?: number; savesCount?: number;`.
+  - [x] Incremento/decremento atomico concorrente tramite `increment(1)` e `increment(-1)` di Firestore per prevenire race condition.
+- [x] **14.2 Pillole Filtro Utente nella Griglia Prodotti**:
+  - [x] `[ Tutti i Prodotti (N) ]`
+  - [x] `[ 🔖 I Miei Salvati (N) ]` con badge contatore salvataggi personali.
+  - [x] `[ ❤️ I Più Amati (N) ]` con badge contatore preferiti personali.
+  - [x] Stato vuoto amichevole personalizzato per filtri senza elementi con pulsante di ripristino vista completa.
+- [x] **14.3 Tabella Prodotti Console Admin con Colonna Statistiche**:
+  - [x] Aggiunta della colonna `"Gradimento & Statistiche"` in `ProductListTable.vue` con visualizzazione in tempo reale di:
+    - ❤️ Mi Piace totali
+    - 🔖 Salvataggi totali nei preferiti
+    - ⭐ Valutazione media con numero di recensioni
+- [x] **14.4 Verifica & Build**:
+  - [x] `npx vue-tsc --noEmit`: 0 errori.
+  - [x] `yarn lint`: 0 errori.
+  - [x] `yarn build`: compilazione SPA riuscita al 100%.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
