@@ -306,5 +306,12 @@
   - [x] Layout pulito e arioso posizionato subito sotto i contatori KPI principali.
 
 ---
+
+### ⭐ FASE 17: Reset Metriche (Rating, Like, Salvataggi) alla Duplicazione Prodotti
+- [x] **17.1 Azzeramento Metriche di Valutazione e Interazione**:
+  - Quando un prodotto viene duplicato (sia da Console Admin `/admin/products` sia dalla Live Preview in-place card), i campi `ratingAverage`, `ratingCount`, `likesCount`, e `savesCount` vengono rimossi dal clone e reinizializzati a `0`.
+  - Il nuovo prodotto duplicato nasce come template/base pulita senza ereditare recensioni, cuoricini o preferiti del prodotto originale.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 

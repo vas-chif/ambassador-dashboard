@@ -89,10 +89,16 @@ const handleDuplicateProduct = async (product: Product) => {
   try {
     const clone: Partial<Product> = { ...product };
     delete clone.id;
+    delete clone.ratingAverage;
+    delete clone.ratingCount;
+    delete clone.likesCount;
+    delete clone.savesCount;
     await store.addProduct({
       ...clone,
       name: `${product.name} (Copia)`,
       order: store.products.length,
+      ratingAverage: 0,
+      ratingCount: 0,
       likesCount: 0,
       savesCount: 0,
     });
