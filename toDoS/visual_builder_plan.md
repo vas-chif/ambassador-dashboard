@@ -355,5 +355,21 @@
 ---
 
 ---
+
+### 👁️ FASE 21: Sistema di Visibilità Elementi (Mostra / Nascondi) per Prodotti e Articoli Carosello
+- [x] **21.1 Estensione Modello Dati `Product` ([src/types/product.ts](file:///home/chif-vas/projects/beauty-ambassador/src/types/product.ts))**:
+  - Aggiunto il campo opzionale `active?: boolean` (default `true`).
+- [x] **21.2 Toggle Visibilità Prodotti in Live Preview ([ProductCard.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ProductCard.vue))**:
+  - Inserito il pulsante occhio `visibility` / `visibility_off` nella pillola in-place fluttuante su ciascuna card prodotto.
+  - Aggiunto badge visivo rosso `Nascosto` e attenuazione opacità (`opacity: 0.72`) in modalità anteprima per prodotti non attivi.
+  - Filtraggio reattivo in [ProductGrid.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ProductGrid.vue): i clienti pubblici non visualizzano i prodotti nascosti, mentre l'ambassador in anteprima può gestirli e riattivarli con un clic.
+- [x] **21.3 Toggle Visibilità Articoli nel Carosello & Dialog Impostazioni**:
+  - In [SectionSettingsDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/builder/SectionSettingsDialog.vue): pulsante rapido occhio `👁` per ogni riga articolo nella lista ordinabile con aggiornamento Firestore istantaneo.
+  - In [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue): pulsante di stato `[ Visibile / Nascosto ]` nel gruppo azioni fluttuante in alto a destra sulla slide attiva con badge di notifica su slide non attiva.
+- [x] **21.4 Toggle Visibilità in Console Admin ([ProductListTable.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ProductListTable.vue) & [ProductFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ProductFormDialog.vue))**:
+  - Pulsante rapido `👁` e chip badge "Nascosto" nella tabella di gestione prodotti dell'amministratore.
+  - Controllo `q-toggle` "Prodotto Attivo / Nascosto" nel modale di modifica prodotto.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 

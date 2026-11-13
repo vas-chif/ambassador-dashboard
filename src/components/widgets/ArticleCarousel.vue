@@ -32,7 +32,10 @@ const isPreview = computed(() => route.query.preview_mode === 'true');
 const slide = ref(1);
 
 const articles = computed(() => {
-  let list = (store.articles || []).filter((a: Article) => a.active);
+  let list = store.articles || [];
+  if (!isPreview.value) {
+    list = list.filter((a: Article) => a.active);
+  }
   if (props.filterType && props.filterType !== 'all') {
     list = list.filter((a: Article) => (a.layoutConfig?.articleType || 'testimonial') === props.filterType);
   }
@@ -40,6 +43,20 @@ const articles = computed(() => {
     .sort((a: Article, b: Article) => (a.order || 0) - (b.order || 0))
     .map((a: Article, index: number) => ({ ...a, slideIndex: index + 1 })); // Slide names must be unique
 });
+
+const handleToggleArticleVisibility = async (art: Article) => {
+  const newActive = !art.active;
+  try {
+    await store.updateArticle(art.id, { active: newActive });
+    $q.notify({
+      type: newActive ? 'positive' : 'warning',
+      message: newActive ? `"${art.title}" ora visibile ai clienti` : `"${art.title}" nascosto dalla vetrina`,
+      timeout: 1000,
+    });
+  } catch {
+    $q.notify({ type: 'negative', message: 'Errore durante l\'aggiornamento dello stato articolo' });
+  }
+};
 
 const currentArticle = computed(() => {
   if (articles.value.length === 0) return null;
@@ -81,13 +98,38 @@ const getButtonJustifyClass = (article: Article) => {
   <div v-if="articles.length > 0" class="article-showcase-section full-width q-mb-xl">
     <!-- 1. FULL-WIDTH TOP IMAGE CAROUSEL (Edge-to-Edge Showcase) -->
     <div class="carousel-full-width-wrapper relative-position full-width overflow-hidden">
-      <!-- In-Place Quick Edit & Duplicate Current Article (Preview Mode Only) -->
+      <!-- Hidden Indicator Badge (Preview Mode Only) -->
+      <div
+        v-if="isPreview && currentArticle && currentArticle.active === false"
+        class="absolute-top-left q-ma-md"
+        style="z-index: 70; top: 48px"
+      >
+        <q-badge color="negative" text-color="white" class="shadow-3 q-px-sm q-py-xs text-weight-bold text-caption">
+          <q-icon name="visibility_off" size="14px" class="q-mr-xs" />
+          Articolo Nascosto ai Clienti
+        </q-badge>
+      </div>
+
+      <!-- In-Place Quick Edit, Duplicate & Visibility Toggle (Preview Mode Only) -->
       <div
         v-if="isPreview && currentArticle"
         class="carousel-quick-edit-action absolute-top-right"
         style="top: 54px; right: 16px; z-index: 70"
       >
         <q-btn-group rounded class="shadow-4">
+          <q-btn
+            unelevated
+            :color="currentArticle.active === false ? 'negative' : 'grey-9'"
+            text-color="white"
+            :icon="currentArticle.active === false ? 'visibility_off' : 'visibility'"
+            :label="currentArticle.active === false ? 'Nascosto' : 'Visibile'"
+            class="text-caption text-weight-bold q-px-sm"
+            size="sm"
+            no-caps
+            @click.stop="handleToggleArticleVisibility(currentArticle)"
+          >
+            <q-tooltip>{{ currentArticle.active === false ? 'Mostra articolo ai clienti' : 'Nascondi articolo ai clienti' }}</q-tooltip>
+          </q-btn>
           <q-btn
             unelevated
             color="primary"

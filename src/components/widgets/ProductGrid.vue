@@ -48,6 +48,9 @@ onMounted(() => {
 
 const displayProducts = computed(() => {
   let list = store.products;
+  if (!isPreview.value) {
+    list = list.filter((p) => p.active !== false);
+  }
   if (props.category) {
     list = list.filter((p) => p.category === props.category);
   }
@@ -61,6 +64,22 @@ const displayProducts = computed(() => {
   }
   return list;
 });
+
+const handleToggleVisibility = async (product: Product) => {
+  const newActive = product.active === false;
+  try {
+    await store.updateProduct(product.id, { active: newActive });
+    $q.notify({
+      type: newActive ? 'positive' : 'warning',
+      message: newActive
+        ? `"${product.name}" ora visibile ai clienti`
+        : `"${product.name}" nascosto dalla vetrina`,
+      timeout: 1000,
+    });
+  } catch {
+    $q.notify({ type: 'negative', message: 'Errore durante l\'aggiornamento dello stato' });
+  }
+};
 
 const openDetailDialog = (product: Product) => {
   selectedProduct.value = product;
@@ -300,6 +319,7 @@ const moveProduct = async (idx: number, direction: 'prev' | 'next') => {
           @open-detail="openDetailDialog"
           @edit-product="emit('edit-product', $event)"
           @duplicate-product="handleDuplicateProduct"
+          @toggle-visibility="handleToggleVisibility"
           @toggle-like="handleToggleLike"
           @toggle-save="handleToggleSave"
           @move-prev="moveProduct($event, 'prev')"

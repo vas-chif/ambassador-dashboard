@@ -22,6 +22,7 @@ const emit = defineEmits<{
   (e: 'quick-add', type: 'articles' | 'products'): void;
   (e: 'open-edit-article', article: Article): void;
   (e: 'reorder-articles', articles: Article[]): void;
+  (e: 'toggle-article-active', article: Article): void;
 }>();
 
 const isSettingsDialogWide = ref(false);
@@ -606,6 +607,18 @@ const onSave = () => {
 
               <!-- Right: Ordering & Actions -->
               <div class="row items-center q-gutter-xs flex-shrink-0">
+                <!-- Toggle Visibility Button (Show / Hide Article) -->
+                <q-btn
+                  dense
+                  flat
+                  round
+                  size="sm"
+                  :icon="art.active ? 'visibility' : 'visibility_off'"
+                  :color="art.active ? 'grey-8' : 'negative'"
+                  @click="emit('toggle-article-active', art)"
+                >
+                  <q-tooltip>{{ art.active ? 'Nascondi articolo ai clienti' : 'Mostra articolo ai clienti' }}</q-tooltip>
+                </q-btn>
                 <q-btn
                   dense
                   flat

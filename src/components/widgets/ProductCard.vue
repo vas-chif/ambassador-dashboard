@@ -24,6 +24,7 @@ const emit = defineEmits<{
   (e: 'open-detail', product: Product): void;
   (e: 'edit-product', product: Product): void;
   (e: 'duplicate-product', product: Product): void;
+  (e: 'toggle-visibility', product: Product): void;
   (e: 'toggle-like', product: Product): void;
   (e: 'toggle-save', product: Product): void;
   (e: 'move-prev', index: number): void;
@@ -52,9 +53,23 @@ const $q = useQuasar();
   >
     <q-card
       class="product-card shadow-3 relative-position"
+      :class="{ 'product-card-hidden': isPreview && product.active === false }"
       :bordered="$q.screen.gt.xs"
       :square="$q.screen.xs"
+      :style="{ opacity: isPreview && product.active === false ? 0.72 : 1 }"
     >
+      <!-- Hidden Indicator Badge (Preview Mode Only) -->
+      <div
+        v-if="isPreview && product.active === false"
+        class="absolute-top-left q-ma-sm"
+        style="z-index: 20"
+      >
+        <q-badge color="negative" text-color="white" class="shadow-2 q-px-sm q-py-xs text-weight-bold">
+          <q-icon name="visibility_off" size="12px" class="q-mr-xs" />
+          Nascosto
+        </q-badge>
+      </div>
+
       <!-- In-Place Visual Builder Action Pill on Card (Preview Mode Only) -->
       <div
         v-if="isPreview"
@@ -102,6 +117,19 @@ const $q = useQuasar();
             @click.stop="emit('move-next', index)"
           >
             <q-tooltip>Sposta dopo</q-tooltip>
+          </q-btn>
+
+          <!-- Toggle Visibility (Show / Hide) -->
+          <q-btn
+            flat
+            dense
+            round
+            size="xs"
+            :icon="product.active === false ? 'visibility_off' : 'visibility'"
+            :color="product.active === false ? 'negative' : 'white'"
+            @click.stop="emit('toggle-visibility', product)"
+          >
+            <q-tooltip>{{ product.active === false ? 'Mostra prodotto ai clienti' : 'Nascondi prodotto ai clienti' }}</q-tooltip>
           </q-btn>
 
           <q-separator vertical dark class="q-mx-xs" style="height: 14px" />

@@ -31,6 +31,7 @@ const newProduct = ref<Partial<Product>>({
   instructions: '',
   images: [],
   externalUrl: '',
+  active: true,
 });
 
 // Watch for dialog opening to set initial data
@@ -39,7 +40,10 @@ watch(
   (val) => {
     if (val) {
       if (props.initialData) {
-        newProduct.value = { ...props.initialData };
+        newProduct.value = {
+          ...props.initialData,
+          active: props.initialData.active ?? true,
+        };
       } else {
         newProduct.value = {
           name: '',
@@ -49,6 +53,7 @@ watch(
           instructions: '',
           images: [],
           externalUrl: '',
+          active: true,
         };
       }
     }
@@ -229,6 +234,18 @@ const saveProduct = async () => {
                   ]"
                 >
                 </q-editor>
+              </div>
+
+              <!-- Product Visibility Toggle -->
+              <div class="row items-center justify-between bg-grey-1 q-pa-sm rounded-borders">
+                <div class="text-caption text-grey-8">
+                  Attiva o disattiva la visibilità di questo prodotto nella vetrina pubblica:
+                </div>
+                <q-toggle
+                  v-model="newProduct.active"
+                  :label="newProduct.active !== false ? 'Prodotto Attivo' : 'Nascosto'"
+                  color="positive"
+                />
               </div>
 
               <div class="row justify-end q-mt-lg">

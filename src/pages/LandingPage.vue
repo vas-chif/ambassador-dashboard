@@ -397,6 +397,20 @@ const handleReorderArticles = async (newList: Article[]) => {
   $q.notify({ type: 'positive', message: 'Ordine articoli aggiornato', timeout: 800 });
 };
 
+const handleToggleArticleActive = async (art: Article) => {
+  const newActive = !art.active;
+  try {
+    await articlesStore.updateArticle(art.id, { active: newActive });
+    $q.notify({
+      type: newActive ? 'positive' : 'warning',
+      message: newActive ? `"${art.title}" ora visibile ai clienti` : `"${art.title}" nascosto dalla vetrina`,
+      timeout: 1000,
+    });
+  } catch {
+    $q.notify({ type: 'negative', message: 'Errore durante l\'aggiornamento dello stato articolo' });
+  }
+};
+
 onMounted(() => {
   settingsStore.subscribeToProfile();
   articlesStore.subscribeToArticles();
@@ -609,6 +623,7 @@ onMounted(() => {
       @quick-add="openQuickAdd"
       @open-edit-article="openEditArticle"
       @reorder-articles="handleReorderArticles"
+      @toggle-article-active="handleToggleArticleActive"
     />
   </q-page>
 </template>

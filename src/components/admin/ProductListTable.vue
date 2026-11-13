@@ -78,6 +78,22 @@ const handleReorder = async () => {
   }
 };
 
+const toggleVisibility = async (product: Product) => {
+  const newActive = product.active === false;
+  try {
+    await store.updateProduct(product.id, { active: newActive });
+    $q.notify({
+      type: newActive ? 'positive' : 'warning',
+      message: newActive
+        ? `"${product.name}" ora visibile ai clienti`
+        : `"${product.name}" nascosto dalla vetrina`,
+      timeout: 1000,
+    });
+  } catch {
+    $q.notify({ type: 'negative', message: 'Errore durante l\'aggiornamento dello stato' });
+  }
+};
+
 const confirmDelete = (product: Product) => {
   $q.dialog({
     title: 'Confirm Deletion',
@@ -179,7 +195,21 @@ const confirmDelete = (product: Product) => {
                 <img :src="row.images?.[0] || 'https://placehold.co/100'" />
               </q-avatar>
             </td>
-            <td>{{ row.name }}</td>
+            <td>
+              <div class="row items-center q-gutter-x-xs">
+                <span class="text-weight-medium">{{ row.name }}</span>
+                <q-chip
+                  v-if="row.active === false"
+                  dense
+                  color="negative"
+                  text-color="white"
+                  size="xs"
+                  class="text-weight-bold"
+                >
+                  Nascosto
+                </q-chip>
+              </div>
+            </td>
             <td>{{ row.category }}</td>
             <td class="text-center">
               <div class="row items-center justify-center q-gutter-x-sm no-wrap">
@@ -205,6 +235,16 @@ const confirmDelete = (product: Product) => {
             </td>
             <td class="text-center">
               <div class="row items-center justify-center no-wrap q-gutter-x-xs">
+                <q-btn
+                  flat
+                  round
+                  :color="row.active === false ? 'negative' : 'grey-7'"
+                  :icon="row.active === false ? 'visibility_off' : 'visibility'"
+                  size="sm"
+                  @click="toggleVisibility(row)"
+                >
+                  <q-tooltip>{{ row.active === false ? 'Mostra Prodotto ai Clienti' : 'Nascondi Prodotto ai Clienti' }}</q-tooltip>
+                </q-btn>
                 <q-btn
                   flat
                   round
