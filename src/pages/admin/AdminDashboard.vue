@@ -4,6 +4,7 @@ import { useProductsStore } from 'stores/products';
 import { useSettingsStore } from 'stores/settings';
 import { useRouter } from 'vue-router';
 import { ADMIN_NAV_ITEMS } from 'src/shared/navigation';
+import QuickQrCodesWidget from 'components/admin/QuickQrCodesWidget.vue';
 
 const productStore = useProductsStore();
 const settingsStore = useSettingsStore();
@@ -11,7 +12,7 @@ const settingsStore = useSettingsStore();
 onMounted(() => {
   productStore.subscribeToProducts();
   settingsStore.subscribeToArticles();
-  // In a real app, you would fetch orders/sales from an Orders store
+  settingsStore.subscribeToProfile();
 });
 
 const kpiData = computed(() => {
@@ -69,7 +70,7 @@ const navigateTo = (path: string) => {
       </div>
     </q-card>
 
-    <div class="row q-col-gutter-md">
+    <div class="row q-col-gutter-md q-mb-xl">
       <div v-for="kpi in kpiData" :key="kpi.label" class="col-12 col-sm-6 col-md-3">
         <q-card
           class="q-pa-sm full-height cursor-pointer hover-card shadow-1"
@@ -98,6 +99,9 @@ const navigateTo = (path: string) => {
         </q-card>
       </div>
     </div>
+
+    <!-- Quick QR Codes Widget for Counter Scan, Download & Print -->
+    <QuickQrCodesWidget />
   </q-page>
 </template>
 
