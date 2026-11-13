@@ -26,8 +26,22 @@ import {
 import { useSecureLogger } from 'src/shared/logger';
 import type { Product } from 'src/types/product';
 
+const CACHE_KEY_PRODUCTS = 'glow_products';
+
 export const useProductsStore = defineStore('products', () => {
-  const products = ref<Product[]>([]);
+  const getCachedProducts = (): Product[] => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_PRODUCTS);
+      if (cached) {
+        return JSON.parse(cached) as Product[];
+      }
+    } catch {
+      // Ignore parse error
+    }
+    return [];
+  };
+
+  const products = ref<Product[]>(getCachedProducts());
   const loading = ref(false);
   const logger = useSecureLogger();
   let unsubscribe: Unsubscribe | null = null;
@@ -52,6 +66,13 @@ export const useProductsStore = defineStore('products', () => {
               }) as Product,
           )
           .sort((a, b) => (a.order ?? 999) - (b.order ?? 999)); // Sort by order field
+
+        try {
+          localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+        } catch {
+          // Ignore quota error
+        }
+
         loading.value = false;
         logger.debug('Products updated', { count: products.value.length });
       },

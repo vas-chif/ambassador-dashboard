@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Elara Logo Preview - Vector Version</title>
+    <style>
+      body {
+        background-color: #050505; /* Nero assoluto */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+      }
+      .logo-container {
+        text-align: center;
+      }
+      svg {
+        width: 300px;
+        filter: drop-shadow(0 20px 40px rgba(0,0,0,0.95)) drop-shadow(0 0 10px rgba(212, 175, 55, 0.15));
+      }
+      .text {
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 14px;
+        margin-top: -20px;
+        font-size: 44px;
+        font-weight: 200;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8));
+      }
+      .subtitle {
+        color: #b8860b;
+        text-transform: uppercase;
+        letter-spacing: 7px;
+        margin-top: 10px;
+        font-size: 12px;
+        opacity: 0.8;
+        font-weight: 400;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="logo-container">
+      <!-- SVG LOGO ELARA - Versione Fedele all'Originale -->
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- GRADIENTE GLOBALE (Elimina le discrepanze tra le giunte) -->
+          <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="120">
+            <stop offset="0%" style="stop-color: #7a5a10; stop-opacity: 1" />
+            <stop offset="20%" style="stop-color: #b8860b; stop-opacity: 1" />
+            <stop offset="45%" style="stop-color: #f5e0a3; stop-opacity: 1" /> <!-- Riflesso di luce -->
+            <stop offset="55%" style="stop-color: #f5e0a3; stop-opacity: 1" /> <!-- Riflesso di luce -->
+            <stop offset="80%" style="stop-color: #b8860b; stop-opacity: 1" />
+            <stop offset="100%" style="stop-color: #5c440c; stop-opacity: 1" />
+          </linearGradient>
+        </defs>
+
+        <!-- 1. ASTA VERTICALE SINISTRA -->
+        <rect x="15" y="10" width="7" height="84" fill="url(#gold)" />
+
+        <!-- 2. GANCIO SUPERIORE (STACCATO) -->
+        <rect x="26" y="10" width="50" height="8" fill="url(#gold)" />
+        <rect x="26" y="18" width="8" height="20" fill="url(#gold)" />
+        <!-- Flare Top -->
+        <path d="M76 10 V23 Q76 18 70 18 H76 Z" fill="url(#gold)" />
+
+        <!-- 3. BARRA CENTRALE (ATTACCATA) -->
+        <rect x="22" y="42" width="46" height="8" fill="url(#gold)" />
+
+        <!-- 4. STRUTTURA L INFERIORE (ATTACCATA) -->
+        <!-- Verticale L che sale -->
+        <rect x="26" y="54" width="8" height="20" fill="url(#gold)" />
+        <!-- Barra di base (L) -->
+        <rect x="26" y="74" width="50" height="8" fill="url(#gold)" />
+        <!-- Flare Base (Mirrored) -->
+        <path d="M76 82 V69 Q76 74 70 74 H76 Z" fill="url(#gold)" />
+
+        <!-- 5. BARRA INFERIORE FINALE (ATTACCATA) -->
+        <rect x="22" y="86" width="54" height="8" fill="url(#gold)" />
+      </svg>
+
+      <div class="text">ELARA</div>
+      <div class="subtitle">PREMIUM BEAUTY</div>
+    </div>
+  </body>
+</html>

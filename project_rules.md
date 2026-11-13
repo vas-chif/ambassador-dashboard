@@ -11,8 +11,9 @@
 - **Security**:
   - Auto-logout (15 min) for Admin Dashboard (critical for data safety).
   - GDPR Compliance (Audit logs).
-- **Cost Optimization**:
-  - Cache static data (Ambassador Layouts) in `localStorage` or Pinia with persistence.
+- **Cost Optimization & UX**:
+  - Cache static and semi-static data (Profile, Layouts, Products, Articles) in `localStorage` or Pinia with persistence.
+  - Pattern Stale-While-Revalidate: render immediately from local cache for instant UX, revalidate with Firestore in background.
   - Read data on-demand, not auto-sync loops.
 
 ## 2. Code & Architecture
@@ -42,5 +43,8 @@
 
 ## 4. Development Workflow
 
-- **Pre-Commit**: Check `yarn lint` and `yarn type-check` (manual or staged).
+- **Branch Strategy (Strict 2-Branches)**:
+  - `dev`: Active development, features, testing and staging.
+  - `main`: Production only. Releases only via controlled merge from `dev`. No direct commits to `main`.
+- **Pre-Commit**: Check `yarn lint` and `npx vue-tsc --noEmit`.
 - **Environment**: Strict separation of `.env.development` and `.env.production`.

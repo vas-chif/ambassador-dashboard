@@ -13,6 +13,8 @@
     "dev": "quasar dev",
     "build": "quasar build",
     "deploy": "quasar build && firebase deploy",
+    "deploy:staging": "quasar build && firebase deploy --project staging",
+    "deploy:prod": "quasar build && firebase deploy --project production",
     "postinstall": "quasar prepare"
   },
   "dependencies": {
@@ -53,7 +55,7 @@
     "vue-tsc": "^3.0.7"
   },
   "engines": {
-    "node": "^28 || ^26 || ^24 || ^22 || ^20",
+    "node": ">= 18.0.0",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
   }

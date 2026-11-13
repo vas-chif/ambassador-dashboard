@@ -4,89 +4,23 @@ import { useSettingsStore } from 'stores/settings';
 import type { Article } from 'stores/settings';
 import { useQuasar } from 'quasar';
 
+import ArticleFormDialog from 'components/admin/ArticleFormDialog.vue';
+
 const store = useSettingsStore();
 const $q = useQuasar();
 
 // --- ARTICLES LOGIC --- //
 const showArticleDialog = ref(false);
-const articleForm = ref<Partial<Article>>({
-  id: '',
-  title: '',
-  description: '',
-  linkUrl: '',
-  actionText: 'Scopri di più',
-  active: true,
-  order: 0,
-});
-const articleFile = ref<File | null>(null);
-const isEditingArticle = ref(false);
+const selectedArticle = ref<Article | null>(null);
 
 const openAddArticle = () => {
-  isEditingArticle.value = false;
-  articleForm.value = {
-    id: '',
-    title: '',
-    description: '',
-    linkUrl: '',
-    actionText: 'Scopri di più',
-    active: true,
-    order: (store.articles?.length || 0) + 1,
-  };
-  articleFile.value = null;
+  selectedArticle.value = null;
   showArticleDialog.value = true;
 };
 
 const openEditArticle = (article: Article) => {
-  isEditingArticle.value = true;
-  articleForm.value = { ...article };
-  articleFile.value = null;
+  selectedArticle.value = { ...article };
   showArticleDialog.value = true;
-};
-
-const handleSaveArticle = async () => {
-  if (!articleForm.value.title) {
-    $q.notify({ type: 'warning', message: 'Title is required' });
-    return;
-  }
-
-  try {
-    let imageUrl = '';
-    // If new file, process it
-    if (articleFile.value) {
-      imageUrl = await store.processBannerImage(articleFile.value);
-    } else if (isEditingArticle.value) {
-      // Keep existing image if editing and no new file
-      const existing = store.articles?.find((a) => a.id === articleForm.value.id);
-      imageUrl = existing?.imageUrl || '';
-    }
-
-    if (!imageUrl) {
-      $q.notify({ type: 'warning', message: 'Image is required' });
-      return;
-    }
-
-    const articleData: Omit<Article, 'id'> = {
-      title: articleForm.value.title,
-      description: articleForm.value.description || '',
-      linkUrl: articleForm.value.linkUrl || '',
-      actionText: articleForm.value.actionText || 'Scopri di più',
-      active: articleForm.value.active ?? true,
-      order: articleForm.value.order || 0,
-      imageUrl,
-    };
-
-    if (isEditingArticle.value && articleForm.value.id) {
-      await store.updateArticle(articleForm.value.id, articleData);
-      $q.notify({ type: 'positive', message: 'Article updated' });
-    } else {
-      await store.addArticle(articleData);
-      $q.notify({ type: 'positive', message: 'Article added' });
-    }
-    showArticleDialog.value = false;
-  } catch (e) {
-    console.error(e);
-    $q.notify({ type: 'negative', message: 'Failed to save article' });
-  }
 };
 
 const confirmDeleteArticle = (article: Article) => {
@@ -135,8 +69,13 @@ onUnmounted(() => {
 
 <template>
   <q-page class="q-pa-md max-width-container">
-    <div class="row justify-between items-center q-mb-lg">
-      <div class="text-h4">Articles Management</div>
+    <div class="row justify-between items-center q-mb-md">
+      <div>
+        <div class="text-h4">Articles & Highlights</div>
+        <div class="text-caption text-grey-8 q-mt-xs">
+          Gestione dei contenuti informativi e delle storie mostrate nel carosello in cima alla homepage. Per i prodotti con prezzo e catalogo vendita, usa la sezione <router-link to="/admin/products" class="text-primary text-weight-bold">Prodotti</router-link>.
+        </div>
+      </div>
       <q-btn color="primary" icon="add" label="Add Article" @click="openAddArticle" size="lg" />
     </div>
 
@@ -202,113 +141,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Article Dialog -->
-    <q-dialog
-      v-model="showArticleDialog"
-      maximized
-      transition-show="slide-up"
-      transition-hide="slide-down"
-    >
-      <q-card>
-        <q-toolbar class="bg-primary text-white">
-          <q-btn flat round dense icon="close" v-close-popup />
-          <q-toolbar-title>{{ isEditingArticle ? 'Edit Article' : 'Add Article' }}</q-toolbar-title>
-          <q-btn flat label="Save" @click="handleSaveArticle" />
-        </q-toolbar>
-
-        <q-card-section class="q-pa-md container-sm">
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-8 offset-md-2">
-              <div class="text-h6 q-mb-md">Article Details</div>
-
-              <div class="row q-col-gutter-md">
-                <div class="col-12">
-                  <q-input v-model="articleForm.title" label="Title *" outlined class="text-h6" />
-                </div>
-
-                <div class="col-12 col-md-6">
-                  <q-input
-                    v-model="articleForm.actionText"
-                    label="Button Text"
-                    outlined
-                    hint="e.g. Read More"
-                  />
-                </div>
-
-                <div class="col-12 col-md-6">
-                  <q-input
-                    v-model="articleForm.linkUrl"
-                    label="Destination URL"
-                    outlined
-                    hint="https://..."
-                  />
-                </div>
-
-                <div class="col-12">
-                  <q-input
-                    v-model="articleForm.description"
-                    label="Description / Summary"
-                    type="textarea"
-                    outlined
-                    rows="5"
-                  />
-                </div>
-
-                <q-separator class="col-12 q-my-sm" />
-
-                <!-- Image Upload -->
-                <div class="col-12">
-                  <div class="text-subtitle2 q-mb-sm">Cover Image *</div>
-                  <q-file
-                    v-model="articleFile"
-                    label="Upload Image (16:9 Recommended)"
-                    outlined
-                    accept="image/*"
-                    bottom-slots
-                  >
-                    <template v-slot:prepend><q-icon name="cloud_upload" /></template>
-                    <template v-slot:hint> Images are optimized automatically. </template>
-                  </q-file>
-
-                  <div
-                    v-if="isEditingArticle && !articleFile"
-                    class="q-mt-sm row items-center q-gutter-sm bg-grey-2 q-pa-sm rounded-borders"
-                  >
-                    <q-icon name="image" size="sm" color="grey-7" />
-                    <span class="text-caption text-grey-8"
-                      >Current image kept. Select new file to change.</span
-                    >
-                  </div>
-                </div>
-
-                <!-- Active Toggle & Order -->
-                <div
-                  class="col-12 row items-center justify-between q-mt-md bg-grey-1 q-pa-sm rounded-borders"
-                >
-                  <div>
-                    <q-toggle
-                      v-model="articleForm.active"
-                      label="Published (Visible)"
-                      color="green"
-                      size="lg"
-                      keep-color
-                    />
-                  </div>
-                  <q-input
-                    v-model.number="articleForm.order"
-                    type="number"
-                    label="Sort Order"
-                    outlined
-                    dense
-                    style="width: 100px"
-                    bg-color="white"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <ArticleFormDialog v-model="showArticleDialog" :initial-data="selectedArticle" />
   </q-page>
 </template>
 

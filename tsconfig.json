@@ -1,8 +1,22 @@
 {
-  "extends": "./.quasar/tsconfig.json",
   "compilerOptions": {
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "esnext",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
     "module": "esnext",
     "moduleResolution": "bundler",
+    "noEmit": true,
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "strict": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"],
@@ -17,5 +31,15 @@
       "#q-app/wrappers": ["./node_modules/@quasar/app-vite/types/app-wrappers.d.ts"],
       "#q-app/*": ["./node_modules/@quasar/app-vite/types/*"]
     }
-  }
+  },
+  "include": [
+    ".quasar/**/*.d.ts",
+    "src/**/*.d.ts",
+    "src/**/*.ts",
+    "src/**/*.vue"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

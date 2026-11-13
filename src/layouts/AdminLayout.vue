@@ -7,15 +7,21 @@
  * @modified 2026-02-06
  */
 
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useAuthStore } from 'stores/auth';
+import { useSettingsStore } from 'stores/settings';
 import { useRouter } from 'vue-router';
 
 import { ADMIN_NAV_ITEMS } from 'src/shared/navigation';
 
 const leftDrawerOpen = ref(false);
 const authStore = useAuthStore();
+const settingsStore = useSettingsStore();
 const router = useRouter();
+
+onMounted(() => {
+  settingsStore.subscribeToProfile();
+});
 
 const toggleLeftDrawer = () => {
   leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -35,11 +41,17 @@ const menuItems = ADMIN_NAV_ITEMS;
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> SIMON OURIAN M.D. Admin Area </q-toolbar-title>
+        <q-toolbar-title>
+          {{ settingsStore.profile.name ? settingsStore.profile.name + ' — Console' : 'Console Ambassador' }}
+        </q-toolbar-title>
 
-        <div>
-          <q-btn flat round icon="notifications" />
-          <q-btn flat round icon="logout" @click="logout" />
+        <div class="row items-center q-gutter-xs">
+          <q-btn flat round icon="visibility" to="/admin/preview">
+            <q-tooltip>Live Preview & Visual Manager</q-tooltip>
+          </q-btn>
+          <q-btn flat round icon="logout" @click="logout">
+            <q-tooltip>Logout</q-tooltip>
+          </q-btn>
         </div>
       </q-toolbar>
     </q-header>

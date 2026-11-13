@@ -190,6 +190,7 @@ const openExternalLink = (url?: string) => {
     <q-dialog
       v-model="showDetailDialog"
       maximized
+      no-focus-restore
       transition-show="slide-up"
       transition-hide="slide-down"
     >

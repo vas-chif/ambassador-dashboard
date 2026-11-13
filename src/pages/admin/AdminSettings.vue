@@ -100,6 +100,11 @@ const form = ref({
   bio: '',
   primaryColor: '#000000',
   secondaryColor: '#000000',
+  productsSectionTitle: '',
+  actionBannerEnabled: true,
+  actionBannerText: '',
+  actionBannerButtonText: '',
+  actionBannerUrl: '',
   whatsapp: '',
   instagram: '',
   tiktok: '',
@@ -120,6 +125,13 @@ watch(
       form.value.bio = newVal.bio;
       form.value.primaryColor = newVal.primaryColor;
       form.value.secondaryColor = newVal.secondaryColor;
+      form.value.productsSectionTitle = newVal.productsSectionTitle || '';
+      form.value.actionBannerEnabled = newVal.actionBannerEnabled ?? true;
+      form.value.actionBannerText =
+        newVal.actionBannerText ??
+        'Acquista qui con codice sconto la tua Skin Care e integrazione personalizzata';
+      form.value.actionBannerButtonText = newVal.actionBannerButtonText ?? 'Skin Care';
+      form.value.actionBannerUrl = newVal.actionBannerUrl || '';
       form.value.whatsapp = newVal.whatsapp || '';
       form.value.instagram = newVal.instagram || '';
       form.value.tiktok = newVal.tiktok || '';
@@ -345,6 +357,88 @@ const saveSettings = async () => {
                     </q-icon>
                   </template>
                 </q-input>
+              </div>
+            </div>
+
+            <!-- Section Titles / Showcase Customization -->
+            <div class="text-h6 q-mt-lg">Personalizzazione Vetrina & Banner</div>
+            <div class="text-caption text-grey q-mb-md">
+              Personalizza i titoli delle sezioni e il banner promozionale a pillola visualizzato nella pagina pubblica
+            </div>
+            <div class="row q-col-gutter-md">
+              <div class="col-12 col-md-8">
+                <q-input
+                  filled
+                  v-model="form.productsSectionTitle"
+                  label="Titolo Sezione Prodotti"
+                  placeholder="I Miei Prodotti Preferiti"
+                  hint="Titolo mostrato sopra la griglia dei tuoi prodotti nella pagina pubblica (es. 'I Miei Prodotti Preferiti', 'Trattamenti e Cura')"
+                >
+                  <template v-slot:prepend>
+                    <q-icon name="title" />
+                  </template>
+                </q-input>
+              </div>
+
+              <!-- Action Pill Banner Settings -->
+              <div class="col-12">
+                <q-card bordered flat class="bg-grey-1 q-pa-md">
+                  <div class="row items-center justify-between q-mb-sm">
+                    <div class="text-subtitle1 text-weight-bold">
+                      Banner Promozionale (Pillola con Bottone)
+                    </div>
+                    <q-toggle
+                      v-model="form.actionBannerEnabled"
+                      label="Attivo nella Homepage"
+                      color="primary"
+                    />
+                  </div>
+                  <div class="text-caption text-grey-7 q-mb-md">
+                    Questo è il banner ovale con bottone circolare posizionato tra il carosello e i prodotti.
+                  </div>
+
+                  <div v-if="form.actionBannerEnabled" class="row q-col-gutter-md">
+                    <div class="col-12">
+                      <q-input
+                        filled
+                        v-model="form.actionBannerText"
+                        label="Messaggio Promo del Banner"
+                        type="textarea"
+                        rows="2"
+                        placeholder="Acquista qui con codice sconto la tua Skin Care e integrazione personalizzata"
+                        bg-color="white"
+                      />
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <q-input
+                        filled
+                        v-model="form.actionBannerButtonText"
+                        label="Testo del Bottone Rotondo"
+                        placeholder="Skin Care"
+                        bg-color="white"
+                        hint="Es. 'Skin Care', 'Promo', 'Ordina'"
+                      >
+                        <template v-slot:prepend>
+                          <q-icon name="smart_button" />
+                        </template>
+                      </q-input>
+                    </div>
+                    <div class="col-12 col-md-8">
+                      <q-input
+                        filled
+                        v-model="form.actionBannerUrl"
+                        label="Link di Destinazione (URL)"
+                        placeholder="https://..."
+                        bg-color="white"
+                        hint="Lascia vuoto per collegarlo automaticamente al tuo WhatsApp"
+                      >
+                        <template v-slot:prepend>
+                          <q-icon name="link" />
+                        </template>
+                      </q-input>
+                    </div>
+                  </div>
+                </q-card>
               </div>
             </div>
 

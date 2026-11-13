@@ -8,10 +8,10 @@
   font-family: 'Playfair Display', serif !important;
 }
 
-// Luxury Smooth Scroll
-html {
-  scroll-behavior: smooth;
-  scroll-snap-type: y proximity;
+// Natural Instant Scroll (Previene salti e sfarfallii alla chiusura dei dialog Quasar)
+html,
+body {
+  scroll-behavior: auto;
 }
 
 * {

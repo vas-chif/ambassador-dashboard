@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "glowandcarespace-maria"
+    "default": "glowandcarespace-maria",
+    "staging": "staging-glowandcarespace",
+    "production": "glowandcarespace-maria"
   }
 }

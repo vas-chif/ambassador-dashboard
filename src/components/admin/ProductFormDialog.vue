@@ -100,6 +100,7 @@ const saveProduct = async () => {
     @update:model-value="emit('update:modelValue', $event)"
     persistent
     maximized
+    no-focus-restore
     transition-show="slide-up"
     transition-hide="slide-down"
   >

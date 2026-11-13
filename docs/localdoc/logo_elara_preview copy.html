@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Elara Logo Preview - Vector Version</title>
+    <style>
+      body {
+        background-color: #121212;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+      }
+      .logo-container {
+        text-align: center;
+      }
+      svg {
+        width: 200px;
+        filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.3));
+      }
+      .text {
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        margin-top: 30px;
+        font-size: 40px;
+        font-weight: 300;
+      }
+      .subtitle {
+        color: #d4af37;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        margin-top: 10px;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="logo-container">
+      <!-- SVG LOGO ELARA - Versione Fedele all'Originale -->
+      <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color: #d4af37; stop-opacity: 1" />
+            <stop offset="50%" style="stop-color: #f5e0a3; stop-opacity: 1" />
+            <stop offset="100%" style="stop-color: #d4af37; stop-opacity: 1" />
+          </linearGradient>
+        </defs>
+
+        <!-- 1. ASTA VERTICALE SINISTRA -->
+        <rect x="15" y="10" width="7" height="91" fill="url(#gold)" />
+
+        <!-- 2. GANCIO SUPERIORE (STACCATO) -->
+        <path d="M30 10 H75 V22 Q75 18 68 18 H38 V38 H30 V10 Z" fill="url(#gold)" />
+        <rect x="30" y="10" width="45" height="8" fill="url(#gold)" />
+        <rect x="30" y="18" width="7" height="20" fill="url(#gold)" />
+        <path d="M75 10 V22 Q75 10 70 10" fill="url(#gold)" />
+
+        <!-- 3. BARRA CENTRALE (ATTACCATA) -->
+        <rect x="22" y="44" width="42" height="8" fill="url(#gold)" />
+
+        <!-- 4. STRUTTURA L INFERIORE (ATTACCATA) -->
+        <rect x="30" y="56" width="7" height="28" fill="url(#gold)" />
+        <rect x="30" y="82" width="46" height="8" fill="url(#gold)" />
+        <path d="M76 90 V75 Q76 82 69 82 H76 Z" fill="url(#gold)" />
+
+        <!-- Barra di base (Sfondo) -->
+        <rect x="22" y="93" width="54" height="8" fill="url(#gold)" />
+      </svg>
+
+      <div class="text">ELARA</div>
+      <div class="subtitle">PREMIUM BEAUTY</div>
+    </div>
+  </body>
+</html>
