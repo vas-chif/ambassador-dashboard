@@ -5,15 +5,10 @@ import {
   doc,
   setDoc,
   onSnapshot,
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  orderBy,
 } from 'firebase/firestore';
 import { setCssVar, uid } from 'quasar';
 import { useSecureLogger } from 'src/shared/logger';
+import { useArticlesStore } from 'stores/articles';
 
 export interface QrCode {
   id: string;
@@ -93,7 +88,6 @@ export interface PublicProfile {
 }
 
 const CACHE_KEY_PROFILE = 'glow_public_profile';
-const CACHE_KEY_ARTICLES = 'glow_articles';
 
 export const useSettingsStore = defineStore('settings', () => {
   // Stale-While-Revalidate: Load initial cached state from localStorage if available
@@ -131,28 +125,8 @@ export const useSettingsStore = defineStore('settings', () => {
     };
   };
 
-  const getCachedArticles = (): Article[] => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY_ARTICLES);
-      if (cached) {
-        return JSON.parse(cached) as Article[];
-      }
-    } catch {
-      // Ignore localStorage parse error
-    }
-    return [];
-  };
-
-  const setCachedArticles = (arts: Article[]) => {
-    try {
-      localStorage.setItem(CACHE_KEY_ARTICLES, JSON.stringify(arts));
-    } catch {
-      // Ignore localStorage save error
-    }
-  };
-
+  const articlesStore = useArticlesStore();
   const profile = ref<PublicProfile>(getCachedProfile());
-  const articles = ref<Article[]>(getCachedArticles());
   const loading = ref(false);
   const logger = useSecureLogger();
 
@@ -165,7 +139,6 @@ export const useSettingsStore = defineStore('settings', () => {
   applyTheme(profile.value);
 
   let unsubscribeProfile: (() => void) | null = null;
-  let unsubscribeArticles: (() => void) | null = null;
 
   const subscribeToProfile = () => {
     if (unsubscribeProfile) return;
@@ -197,46 +170,12 @@ export const useSettingsStore = defineStore('settings', () => {
     );
   };
 
-  const subscribeToArticles = () => {
-    if (unsubscribeArticles) return;
-
-    const articlesRef = collection(db, 'articles');
-    const q = query(articlesRef, orderBy('order', 'asc'));
-
-    unsubscribeArticles = onSnapshot(
-      q,
-      (snapshot) => {
-        articles.value = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as Omit<Article, 'id'>),
-        }));
-
-        // Cache articles locally
-        try {
-          localStorage.setItem(CACHE_KEY_ARTICLES, JSON.stringify(articles.value));
-        } catch {
-          // Ignore quota exceeded
-        }
-
-        if (articles.value.length === 0) {
-          void seedDefaultArticles();
-        }
-      },
-      (error) => {
-        logger.error('Error in articles subscription', error);
-      },
-    );
-  };
-
   const unsubscribeAll = () => {
     if (unsubscribeProfile) {
       unsubscribeProfile();
       unsubscribeProfile = null;
     }
-    if (unsubscribeArticles) {
-      unsubscribeArticles();
-      unsubscribeArticles = null;
-    }
+    articlesStore.unsubscribeAll();
   };
 
   const updateProfile = async (updates: Partial<PublicProfile>) => {
@@ -425,139 +364,26 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   };
 
-  // --- ARTICLES --- //
-
-  const processBannerImage = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-
-          const MAX_WIDTH = 1200;
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Canvas context not available'));
-            return;
-          }
-
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          resolve(compressedDataUrl);
-        };
-        img.onerror = () => reject(new Error('Failed to load image'));
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-    });
-  };
-
-  const addArticle = async (article: Omit<Article, 'id'>) => {
-    loading.value = true;
-    try {
-      const articlesRef = collection(db, 'articles');
-      await addDoc(articlesRef, article);
-    } catch (e) {
-      logger.error('Error adding article', e);
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const updateArticle = async (id: string, updates: Partial<Article>) => {
-    loading.value = true;
-    try {
-      const docRef = doc(db, 'articles', id);
-      await updateDoc(docRef, updates);
-    } catch (e) {
-      logger.error('Error updating article', e);
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const deleteArticle = async (id: string) => {
-    loading.value = true;
-    try {
-      const docRef = doc(db, 'articles', id);
-      await deleteDoc(docRef);
-    } catch (e) {
-      logger.error('Error deleting article', e);
-      throw e;
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const updateArticlesOrder = async (orderedArticles: Article[]) => {
-    const updated = orderedArticles.map((art, idx) => ({ ...art, order: idx }));
-    articles.value = updated;
-    setCachedArticles(updated);
-
-    try {
-      const promises = updated.map((art) => {
-        const docRef = doc(db, 'articles', art.id);
-        return updateDoc(docRef, { order: art.order });
-      });
-      await Promise.all(promises);
-      logger.info('Articles order updated successfully');
-    } catch (e) {
-      logger.error('Error updating articles order', e);
-      throw e;
-    }
-  };
-
-  const seedDefaultArticles = async () => {
-    // Check if we already have articles
-    if (articles.value.length > 0) return;
-
-    const defaultArticle: Omit<Article, 'id'> = {
-      title: 'Skin Consultation',
-      description: 'Scopri la tua routine personalizzata con il Dr. Simon Ourian',
-      imageUrl: 'https://placehold.co/1200x600/e0e0e0/333333?text=Skin+Consultation',
-      linkUrl: 'https://simonourianmd.com/beautyrosebyrosy/SkinConsultation/Home',
-      actionText: 'Fai il Test della Pelle',
-      active: true,
-      order: 1,
-    };
-
-    await addArticle(defaultArticle);
-  };
-
   return {
     profile,
-    articles,
     loading,
     subscribeToProfile,
-    subscribeToArticles,
     unsubscribeAll,
-    unsubscribeFromProfile: unsubscribeAll, // Alias for backward compatibility if needed
+    unsubscribeFromProfile: unsubscribeAll,
     updateProfile,
     uploadAvatar,
     addQrCode,
     updateQrCode,
     removeQrCode,
-    processBannerImage,
-    addArticle,
-    updateArticle,
-    deleteArticle,
-    updateArticlesOrder,
+    // Delegated to articlesStore for backwards compatibility
+    get articles() {
+      return articlesStore.articles;
+    },
+    subscribeToArticles: articlesStore.subscribeToArticles,
+    processBannerImage: articlesStore.processBannerImage,
+    addArticle: articlesStore.addArticle,
+    updateArticle: articlesStore.updateArticle,
+    deleteArticle: articlesStore.deleteArticle,
+    updateArticlesOrder: articlesStore.updateArticlesOrder,
   };
 });

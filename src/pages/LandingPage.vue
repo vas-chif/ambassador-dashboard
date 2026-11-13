@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * @file LandingPage.vue
- * @description Main public showcase and interactive in-place Visual Builder for Beauty Ambassador.
+ * @description Vetrina pubblica e orchestratore del Visual Builder interattivo per Beauty Ambassador.
+ * Architettura modulare decomposta: compone widget e dialog specializzati in conformità a §0.2 e §0.3.
  * @author Vasile Chifeac (AI Agent)
  */
 
@@ -9,13 +10,21 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useSettingsStore } from 'stores/settings';
-import type { Article } from 'stores/settings';
+import type { Article, CustomSectionConfig, PublicProfile } from 'stores/settings';
 import type { Product } from 'src/types/product';
+
+// Widgets & Dialogs modulari
 import ProductGrid from 'components/widgets/ProductGrid.vue';
 import ArticleCarousel from 'components/widgets/ArticleCarousel.vue';
+import ActionPillBanner from 'components/widgets/ActionPillBanner.vue';
 import ContactDialog from 'components/widgets/ContactDialog.vue';
 import ArticleFormDialog from 'components/admin/ArticleFormDialog.vue';
 import ProductFormDialog from 'components/admin/ProductFormDialog.vue';
+
+// Sub-componenti Visual Builder
+import SectionToolbar from 'components/builder/SectionToolbar.vue';
+import AddSectionDialog from 'components/builder/AddSectionDialog.vue';
+import SectionSettingsDialog from 'components/builder/SectionSettingsDialog.vue';
 
 // Brand colors
 const BRAND_PRIMARY = '#101010';
@@ -33,70 +42,12 @@ const showContactDialog = ref(false);
 const showArticleDialog = ref(false);
 const showProductDialog = ref(false);
 const showSettingsDialog = ref(false);
+const showAddSectionDialog = ref(false);
 
 const selectedArticle = ref<Article | null>(null);
 const selectedProduct = ref<Product | null>(null);
 const activeSettingsSection = ref<string>('');
-
-// Temporary settings form for section customization
-const isSettingsDialogMaximized = ref(false);
-const isSettingsDialogWide = ref(true);
-const showAddSectionDialog = ref(false);
 const targetAddIndex = ref<number | null>(null);
-const draggingArticleIndex = ref<number | null>(null);
-
-const dialogCardStyle = computed(() => {
-  if (isSettingsDialogMaximized.value) {
-    return { width: '100%', height: '100%' };
-  }
-  return {
-    width: isSettingsDialogWide.value ? '780px' : '520px',
-    maxWidth: '96vw',
-    transition: 'all 0.25s ease-in-out',
-  };
-});
-
-const sectionForm = ref<{
-  productsTitle: string;
-  bannerText: string;
-  bannerButtonText: string;
-  bannerUrl: string;
-  bannerEnabled: boolean;
-  profileName: string;
-  profileBio: string;
-  profileWhatsapp: string;
-  profileInstagram: string;
-  profileTiktok: string;
-  profileEmail: string;
-  articleFilterType: 'all' | 'testimonial' | 'product';
-  profileTextAlign: 'left' | 'center' | 'right' | 'justify';
-  profileFontFamily: 'serif' | 'sans';
-  profileFontWeight: 'light' | 'normal' | 'bold';
-  profileTitleSize: 'h2' | 'h3' | 'h4';
-  profileMaxWidth: 'sm' | 'md' | 'lg' | 'full';
-  profileShowAvatar: boolean;
-  profileShowSocials: boolean;
-}>({
-  productsTitle: '',
-  bannerText: '',
-  bannerButtonText: '',
-  bannerUrl: '',
-  bannerEnabled: true,
-  profileName: '',
-  profileBio: '',
-  profileWhatsapp: '',
-  profileInstagram: '',
-  profileTiktok: '',
-  profileEmail: '',
-  articleFilterType: 'all',
-  profileTextAlign: 'center',
-  profileFontFamily: 'serif',
-  profileFontWeight: 'normal',
-  profileTitleSize: 'h2',
-  profileMaxWidth: 'md',
-  profileShowAvatar: true,
-  profileShowSocials: true,
-});
 
 // Profile Typography & Style Helpers
 const getProfileTitleClass = (secId: string): string => {
@@ -119,34 +70,33 @@ const getProfileAlignClass = (secId: string): string => {
 
 const getProfileMaxWidthStyle = (secId: string) => {
   const cfg = getCustomSectionConfig(secId);
-  const maxW = cfg.maxWidth || 'md';
-  if (maxW === 'sm') return { maxWidth: '520px', width: '100%', margin: '0 auto' };
-  if (maxW === 'lg') return { maxWidth: '960px', width: '100%', margin: '0 auto' };
-  if (maxW === 'full') return { maxWidth: '100%', width: '100%' };
-  return { maxWidth: '720px', width: '100%', margin: '0 auto' };
+  const mw = cfg.maxWidth || 'md';
+  if (mw === 'sm') return { maxWidth: '520px', margin: '0 auto' };
+  if (mw === 'lg') return { maxWidth: '960px', margin: '0 auto' };
+  if (mw === 'full') return { maxWidth: '100%', margin: '0 auto' };
+  return { maxWidth: '720px', margin: '0 auto' };
 };
 
-// Section type helpers
-const getSectionType = (secId: string): string => {
+const getCustomSectionConfig = (sectionId: string): CustomSectionConfig => {
+  return settingsStore.profile.customSections?.[sectionId] || {};
+};
+
+const getSectionType = (secId: string): 'profile' | 'articles' | 'actionBanner' | 'products' => {
   if (secId.startsWith('profile')) return 'profile';
   if (secId.startsWith('articles')) return 'articles';
   if (secId.startsWith('actionBanner')) return 'actionBanner';
   if (secId.startsWith('products')) return 'products';
-  return secId;
+  return 'profile';
 };
 
 const getSectionLabel = (secId: string): string => {
+  const isCustom = !['profile', 'articles', 'actionBanner', 'products'].includes(secId);
   const type = getSectionType(secId);
-  const isCustom = secId.includes('_copy') || secId.includes('_custom');
-  if (type === 'profile') return isCustom ? 'Profilo (Extra)' : 'Profilo & Social';
+  if (type === 'profile') return isCustom ? 'Profilo & Filosofia (Extra)' : 'Profilo & Social';
   if (type === 'articles') return isCustom ? 'Carosello Articoli (Extra)' : 'Carosello Articoli';
   if (type === 'actionBanner') return isCustom ? 'Banner Azione (Extra)' : 'Banner Promozionale';
   if (type === 'products') return isCustom ? 'Griglia Prodotti (Extra)' : 'Griglia Prodotti';
   return secId;
-};
-
-const getCustomSectionConfig = (sectionId: string) => {
-  return settingsStore.profile.customSections?.[sectionId] || {};
 };
 
 const getSectionIcon = (secId: string): string => {
@@ -155,47 +105,44 @@ const getSectionIcon = (secId: string): string => {
   if (type === 'articles') return 'view_carousel';
   if (type === 'actionBanner') return 'smart_button';
   if (type === 'products') return 'grid_view';
-  return 'extension';
+  return 'dashboard';
 };
 
 const bannerTargetUrl = computed(() => {
   if (settingsStore.profile.actionBannerUrl) {
     return settingsStore.profile.actionBannerUrl;
   }
-  if (settingsStore.profile.whatsapp) {
-    return 'https://wa.me/' + settingsStore.profile.whatsapp.replace('+', '');
+  const phone = settingsStore.profile.whatsapp?.replace(/\D/g, '') || '';
+  if (phone) {
+    return `https://wa.me/${phone}?text=Ciao!%20Vorrei%20informazioni%20sui%20prodotti%20skincare`;
   }
   return '#';
 });
 
-const isSectionHidden = (sectionId: string) => {
-  const hidden = settingsStore.profile.hiddenSections || [];
-  if (hidden.includes(sectionId)) return true;
-  if (getSectionType(sectionId) === 'actionBanner' && settingsStore.profile.actionBannerEnabled === false) {
+const defaultSections = ['profile', 'articles', 'actionBanner', 'products'];
+
+const sectionsList = computed(() => {
+  if (settingsStore.profile.sectionsOrder && settingsStore.profile.sectionsOrder.length > 0) {
+    return settingsStore.profile.sectionsOrder;
+  }
+  return defaultSections;
+});
+
+const isSectionHidden = (sectionId: string): boolean => {
+  if (sectionId === 'actionBanner' && settingsStore.profile.actionBannerEnabled === false) {
     return true;
   }
-  return false;
+  return (settingsStore.profile.hiddenSections || []).includes(sectionId);
 };
 
-const isSectionVisible = (sectionId: string) => {
+const isSectionVisible = (sectionId: string): boolean => {
   return !isSectionHidden(sectionId);
 };
 
-const sectionsList = computed(() => {
-  const order = settingsStore.profile.sectionsOrder || [
-    'profile',
-    'articles',
-    'actionBanner',
-    'products',
-  ];
-  const defaultSections = ['profile', 'articles', 'actionBanner', 'products'];
-  return [...new Set([...order, ...defaultSections])];
-});
-
-// In-Place Visual Builder Actions
+// Builder Actions
 const toggleSectionVisibility = async (sectionId: string) => {
   const currentHidden = [...(settingsStore.profile.hiddenSections || [])];
-  const isCurrentlyHidden = currentHidden.includes(sectionId);
+  const isCurrentlyHidden = isSectionHidden(sectionId);
   let updatedHidden: string[];
 
   if (isCurrentlyHidden) {
@@ -253,8 +200,7 @@ const duplicateSection = async (sectionId: string, index: number) => {
   });
 };
 
-const openQuickAdd = (sectionId: string) => {
-  const type = getSectionType(sectionId);
+const openQuickAdd = (type: 'articles' | 'products') => {
   if (type === 'articles') {
     selectedArticle.value = null;
     showArticleDialog.value = true;
@@ -267,66 +213,6 @@ const openQuickAdd = (sectionId: string) => {
 const openEditArticle = (article: Article) => {
   selectedArticle.value = { ...article };
   showArticleDialog.value = true;
-};
-
-const confirmDeleteArticle = (article: Article) => {
-  $q.dialog({
-    title: 'Elimina Articolo',
-    message: `Sei sicuro di voler eliminare definitivamente "${article.title}"?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    void (async () => {
-      try {
-        await settingsStore.deleteArticle(article.id);
-        $q.notify({ type: 'positive', message: 'Articolo eliminato con successo' });
-      } catch {
-        $q.notify({ type: 'negative', message: 'Errore durante l\'eliminazione' });
-      }
-    })();
-  });
-};
-
-const toggleArticleStatus = async (article: Article) => {
-  try {
-    const newStatus = !article.active;
-    await settingsStore.updateArticle(article.id, { active: newStatus });
-    $q.notify({
-      type: 'info',
-      message: `Articolo ${newStatus ? 'visibile' : 'nascosto'}`,
-      timeout: 800,
-    });
-  } catch {
-    $q.notify({ type: 'negative', message: 'Errore durante l\'aggiornamento dello stato' });
-  }
-};
-
-const moveArticle = async (index: number, direction: 'up' | 'down') => {
-  const list = [...settingsStore.articles];
-  const targetIndex = direction === 'up' ? index - 1 : index + 1;
-  if (targetIndex < 0 || targetIndex >= list.length) return;
-  const item = list[index];
-  if (!item) return;
-  list.splice(index, 1);
-  list.splice(targetIndex, 0, item);
-  await settingsStore.updateArticlesOrder(list);
-  $q.notify({ type: 'positive', message: 'Ordine aggiornato', timeout: 600 });
-};
-
-const onArticleDragStart = (index: number) => {
-  draggingArticleIndex.value = index;
-};
-
-const onArticleDrop = async (targetIndex: number) => {
-  if (draggingArticleIndex.value === null || draggingArticleIndex.value === targetIndex) return;
-  const list = [...settingsStore.articles];
-  const item = list[draggingArticleIndex.value];
-  if (!item) return;
-  list.splice(draggingArticleIndex.value, 1);
-  list.splice(targetIndex, 0, item);
-  draggingArticleIndex.value = null;
-  await settingsStore.updateArticlesOrder(list);
-  $q.notify({ type: 'positive', message: 'Ordine articoli aggiornato', timeout: 800 });
 };
 
 const openAddSection = (index?: number) => {
@@ -405,111 +291,33 @@ const removeSection = (sectionId: string) => {
 
 const openSectionSettings = (sectionId: string) => {
   activeSettingsSection.value = sectionId;
-  const custom = getCustomSectionConfig(sectionId);
-  sectionForm.value = {
-    productsTitle: custom.title || settingsStore.profile.productsSectionTitle || 'I Miei Prodotti Preferiti',
-    bannerText: custom.bannerText || settingsStore.profile.actionBannerText || '',
-    bannerButtonText: custom.bannerButtonText || settingsStore.profile.actionBannerButtonText || 'Skin Care',
-    bannerUrl: custom.bannerUrl || settingsStore.profile.actionBannerUrl || '',
-    bannerEnabled: (custom.bannerEnabled !== undefined ? custom.bannerEnabled : settingsStore.profile.actionBannerEnabled) !== false,
-    profileName: custom.title || settingsStore.profile.name || '',
-    profileBio: custom.bio || settingsStore.profile.bio || '',
-    profileWhatsapp: settingsStore.profile.whatsapp || '',
-    profileInstagram: settingsStore.profile.instagram || '',
-    profileTiktok: settingsStore.profile.tiktok || '',
-    profileEmail: settingsStore.profile.email || '',
-    articleFilterType: custom.articleFilterType || 'all',
-    profileTextAlign: custom.textAlign || 'center',
-    profileFontFamily: custom.fontFamily || 'serif',
-    profileFontWeight: custom.fontWeight || 'normal',
-    profileTitleSize: custom.titleSize || 'h2',
-    profileMaxWidth: custom.maxWidth || 'md',
-    profileShowAvatar: custom.showAvatar !== undefined ? custom.showAvatar : (sectionId === 'profile'),
-    profileShowSocials: custom.showSocials !== undefined ? custom.showSocials : (sectionId === 'profile'),
-  };
   showSettingsDialog.value = true;
 };
 
-const saveSectionSettings = async () => {
-  const sectionId = activeSettingsSection.value;
-  const type = getSectionType(sectionId);
-  const isDefaultSection = ['profile', 'articles', 'actionBanner', 'products'].includes(sectionId);
+const handleSaveSectionSettings = async (
+  sectionId: string,
+  updatedConfig: CustomSectionConfig,
+  profileUpdates?: Partial<PublicProfile>,
+) => {
+  const customSections = { ...(settingsStore.profile.customSections || {}) };
+  customSections[sectionId] = updatedConfig;
 
-  if (type === 'products') {
-    if (isDefaultSection) {
-      await settingsStore.updateProfile({
-        productsSectionTitle: sectionForm.value.productsTitle,
-      });
-    } else {
-      const customSections = { ...(settingsStore.profile.customSections || {}) };
-      customSections[sectionId] = {
-        ...customSections[sectionId],
-        title: sectionForm.value.productsTitle,
-      };
-      await settingsStore.updateProfile({ customSections });
-    }
-  } else if (type === 'actionBanner') {
-    if (isDefaultSection) {
-      await settingsStore.updateProfile({
-        actionBannerText: sectionForm.value.bannerText,
-        actionBannerButtonText: sectionForm.value.bannerButtonText,
-        actionBannerUrl: sectionForm.value.bannerUrl,
-        actionBannerEnabled: sectionForm.value.bannerEnabled,
-      });
-    } else {
-      const customSections = { ...(settingsStore.profile.customSections || {}) };
-      customSections[sectionId] = {
-        ...customSections[sectionId],
-        bannerText: sectionForm.value.bannerText,
-        bannerButtonText: sectionForm.value.bannerButtonText,
-        bannerUrl: sectionForm.value.bannerUrl,
-        bannerEnabled: sectionForm.value.bannerEnabled,
-      };
-      await settingsStore.updateProfile({ customSections });
-    }
-  } else if (type === 'articles') {
-    const customSections = { ...(settingsStore.profile.customSections || {}) };
-    customSections[sectionId] = {
-      ...customSections[sectionId],
-      articleFilterType: sectionForm.value.articleFilterType,
-    };
-    await settingsStore.updateProfile({ customSections });
-  } else if (type === 'profile') {
-    const customSections = { ...(settingsStore.profile.customSections || {}) };
-    customSections[sectionId] = {
-      ...customSections[sectionId],
-      title: sectionForm.value.profileName,
-      bio: sectionForm.value.profileBio,
-      textAlign: sectionForm.value.profileTextAlign,
-      fontFamily: sectionForm.value.profileFontFamily,
-      fontWeight: sectionForm.value.profileFontWeight,
-      titleSize: sectionForm.value.profileTitleSize,
-      maxWidth: sectionForm.value.profileMaxWidth,
-      showAvatar: sectionForm.value.profileShowAvatar,
-      showSocials: sectionForm.value.profileShowSocials,
-    };
-    if (sectionId === 'profile') {
-      await settingsStore.updateProfile({
-        name: sectionForm.value.profileName,
-        bio: sectionForm.value.profileBio,
-        whatsapp: sectionForm.value.profileWhatsapp,
-        instagram: sectionForm.value.profileInstagram,
-        tiktok: sectionForm.value.profileTiktok,
-        email: sectionForm.value.profileEmail,
-        customSections,
-      });
-    } else {
-      await settingsStore.updateProfile({ customSections });
-    }
-  }
+  await settingsStore.updateProfile({
+    ...(profileUpdates || {}),
+    customSections,
+  });
 
-  showSettingsDialog.value = false;
   $q.notify({
     type: 'positive',
     message: 'Impostazioni della sezione salvate!',
     icon: 'check',
     timeout: 1200,
   });
+};
+
+const handleReorderArticles = async (newList: Article[]) => {
+  await settingsStore.updateArticlesOrder(newList);
+  $q.notify({ type: 'positive', message: 'Ordine articoli aggiornato', timeout: 800 });
 };
 
 onMounted(() => {
@@ -530,191 +338,70 @@ onMounted(() => {
           'builder-section-hidden': isPreview && isSectionHidden(section),
         }"
       >
-        <!-- In-Place Hover Action Toolbar (Visible only in preview mode) -->
-        <div v-if="isPreview" class="visual-builder-toolbar row items-center no-wrap shadow-4">
-          <!-- Section Badge -->
-          <div class="section-tag row items-center q-px-sm text-white">
-            <q-icon :name="getSectionIcon(section)" size="14px" class="q-mr-xs" />
-            <span class="text-caption text-weight-bold">{{ getSectionLabel(section) }}</span>
-            <span v-if="isSectionHidden(section)" class="q-ml-xs text-negative text-weight-bold">
-              • Nascosto
-            </span>
-          </div>
+        <!-- In-Place Hover Action Toolbar Component (Preview Mode Only) -->
+        <SectionToolbar
+          v-if="isPreview"
+          :section="section"
+          :index="index"
+          :total-sections="sectionsList.length"
+          :is-hidden="isSectionHidden(section)"
+          :is-custom="!['profile', 'articles', 'actionBanner', 'products'].includes(section)"
+          :section-type="getSectionType(section)"
+          :label="getSectionLabel(section)"
+          :icon="getSectionIcon(section)"
+          @toggle-visibility="toggleSectionVisibility"
+          @move-up="moveSection($event, 'up')"
+          @move-down="moveSection($event, 'down')"
+          @duplicate="duplicateSection"
+          @quick-add="openQuickAdd"
+          @open-settings="openSectionSettings"
+          @remove="removeSection"
+        />
 
-          <q-separator vertical dark class="q-mx-xs" style="height: 18px" />
+        <!-- Section Content Renderer -->
 
-          <!-- 1. Eye Button (Visibility) -->
-          <q-btn
-            dense
-            flat
-            round
-            size="sm"
-            :icon="isSectionHidden(section) ? 'visibility_off' : 'visibility'"
-            :color="isSectionHidden(section) ? 'negative' : 'white'"
-            @click="toggleSectionVisibility(section)"
-          >
-            <q-tooltip>{{ isSectionHidden(section) ? 'Mostra sezione ai clienti' : 'Nascondi sezione ai clienti' }}</q-tooltip>
-          </q-btn>
-
-          <!-- 2. Move Up Button -->
-          <q-btn
-            dense
-            flat
-            round
-            size="sm"
-            icon="arrow_upward"
-            color="white"
-            :disable="index === 0"
-            @click="moveSection(index, 'up')"
-          >
-            <q-tooltip>Sposta Sezione Su</q-tooltip>
-          </q-btn>
-
-          <!-- 3. Move Down Button -->
-          <q-btn
-            dense
-            flat
-            round
-            size="sm"
-            icon="arrow_downward"
-            color="white"
-            :disable="index === sectionsList.length - 1"
-            @click="moveSection(index, 'down')"
-          >
-            <q-tooltip>Sposta Sezione Giù</q-tooltip>
-          </q-btn>
-
-          <!-- 4. Duplicate Button -->
-          <q-btn
-            dense
-            flat
-            round
-            size="sm"
-            icon="content_copy"
-            color="white"
-            @click="duplicateSection(section, index)"
-          >
-            <q-tooltip>Duplica Sezione</q-tooltip>
-          </q-btn>
-
-          <!-- 5. Quick Add Item (+ Articolo / + Prodotto) -->
-          <q-btn
-            v-if="getSectionType(section) === 'articles' || getSectionType(section) === 'products'"
-            dense
-            flat
-            round
-            size="sm"
-            icon="add_circle"
-            color="positive"
-            @click="openQuickAdd(section)"
-          >
-            <q-tooltip>
-              {{ getSectionType(section) === 'articles' ? '+ Aggiungi Articolo Rapido' : '+ Aggiungi Prodotto Rapido' }}
-            </q-tooltip>
-          </q-btn>
-
-          <!-- 6. Section Settings -->
-          <q-btn
-            dense
-            flat
-            round
-            size="sm"
-            icon="tune"
-            color="white"
-            @click="openSectionSettings(section)"
-          >
-            <q-tooltip>Impostazioni Layout Sezione</q-tooltip>
-          </q-btn>
-
-          <!-- 7. Insert Section Below -->
-          <q-btn
-            dense
-            flat
-            round
-            size="sm"
-            icon="add"
-            color="positive"
-            @click="openAddSection(index)"
-          >
-            <q-tooltip>Inserisci Nuova Sezione Sotto</q-tooltip>
-          </q-btn>
-
-          <!-- 8. Remove Section if not main profile -->
-          <q-btn
-            v-if="section !== 'profile'"
-            dense
-            flat
-            round
-            size="sm"
-            icon="delete"
-            color="negative"
-            @click="removeSection(section)"
-          >
-            <q-tooltip>Elimina Questa Sezione</q-tooltip>
-          </q-btn>
-        </div>
-
-        <!-- Hidden Notice in Preview Mode -->
-        <div v-if="isPreview && isSectionHidden(section)" class="hidden-section-banner text-caption text-center q-py-xs bg-grey-9 text-white">
-          <q-icon name="visibility_off" size="xs" class="q-mr-xs" />
-          Questa sezione è <strong>nascosta ai clienti</strong>. Clicca sull'icona occhio nella barra sovrastante per riattivarla.
-        </div>
-
-        <!-- 1. Hero / Profile / Bio Section -->
+        <!-- 1. Profile / Philosophy & Social Section -->
         <div
           v-if="getSectionType(section) === 'profile'"
-          class="row justify-center items-center q-py-xl q-px-md relative-position min-h-hero"
+          class="max-width-container q-px-md q-pt-xl q-pb-lg text-center"
         >
+          <!-- Dynamic / Customizable Avatar -->
           <div
-            :class="`col-12 col-md-auto column ${getProfileAlignClass(section)}`"
-            :style="getProfileMaxWidthStyle(section)"
+            v-if="getCustomSectionConfig(section).showAvatar !== false"
+            class="row justify-center q-mb-md"
           >
-            <template v-if="settingsStore.loading">
-              <q-skeleton type="circle" size="150px" class="q-mb-md" />
-              <q-skeleton type="text" width="200px" class="text-h2" />
-              <q-skeleton type="text" width="300px" class="q-mt-sm" />
-              <div class="row q-gutter-md q-mt-lg justify-center">
-                <q-skeleton type="QBtn" size="40px" />
-                <q-skeleton type="QBtn" size="40px" />
-                <q-skeleton type="QBtn" size="40px" />
-              </div>
-            </template>
+            <q-avatar size="140px" class="shadow-3">
+              <img
+                :src="settingsStore.profile.avatarUrl || 'https://cdn.quasar.dev/img/avatar.png'"
+                alt="Ambassador Avatar"
+              />
+            </q-avatar>
+          </div>
 
-            <template v-else>
-              <!-- Avatar (shown if showAvatar !== false) -->
-              <q-avatar
-                v-if="getCustomSectionConfig(section).showAvatar !== false && (settingsStore.profile.avatarUrl || isPreview)"
-                size="150px"
-                class="q-mb-md shadow-3"
-              >
-                <q-skeleton v-if="!settingsStore.profile.avatarUrl" type="circle" size="150px" />
-                <img
-                  v-else
-                  :src="settingsStore.profile.avatarUrl"
-                  style="object-fit: cover; width: 100%; height: 100%"
-                />
-              </q-avatar>
+          <!-- Dynamic Title & Bio Container -->
+          <div :style="getProfileMaxWidthStyle(section)">
+            <h1
+              class="q-my-none q-mb-sm text-primary"
+              :class="getProfileTitleClass(section)"
+            >
+              {{ getCustomSectionConfig(section).title || settingsStore.profile.name || 'Glow and Care Space' }}
+            </h1>
 
-              <!-- Title with dynamic size, font, weight, alignment -->
-              <div
-                :class="`text-primary q-mb-sm ${getProfileTitleClass(section)} ${getProfileAlignClass(section)}`"
-              >
-                {{ getCustomSectionConfig(section).title || settingsStore.profile.name }}
-              </div>
+            <p
+              class="text-grey-8 text-body1 q-mb-lg"
+              :class="getProfileAlignClass(section)"
+              style="line-height: 1.6; white-space: pre-line"
+            >
+              {{
+                getCustomSectionConfig(section).bio ||
+                settingsStore.profile.bio ||
+                'Credo che il benessere nasca dalle piccole scelte quotidiane e dalla curiosità di scoprire nuove possibilità per stare meglio.'
+              }}
+            </p>
 
-              <!-- Bio with dynamic style, alignment -->
-              <div
-                :class="`text-subtitle1 text-grey-8 ${getProfileAlignClass(section)}`"
-                style="line-height: 1.6"
-              >
-                {{ getCustomSectionConfig(section).bio || settingsStore.profile.bio }}
-              </div>
-
-              <!-- Social Media Links (shown if showSocials !== false) -->
-              <div
-                v-if="getCustomSectionConfig(section).showSocials !== false"
-                class="row q-gutter-md q-mt-lg justify-center"
-              >
+            <!-- Social Media & Contact Links -->
+            <template v-if="getCustomSectionConfig(section).showSocials !== false">
+              <div class="row justify-center q-gutter-md q-mb-md">
                 <q-btn
                   v-if="settingsStore.profile.whatsapp"
                   round
@@ -722,7 +409,7 @@ onMounted(() => {
                   color="primary"
                   icon="fa-brands fa-whatsapp"
                   type="a"
-                  :href="'https://wa.me/' + settingsStore.profile.whatsapp.replace('+', '')"
+                  :href="`https://wa.me/${settingsStore.profile.whatsapp}`"
                   target="_blank"
                 >
                   <q-tooltip>WhatsApp</q-tooltip>
@@ -734,11 +421,7 @@ onMounted(() => {
                   color="primary"
                   icon="fa-brands fa-tiktok"
                   type="a"
-                  :href="
-                    settingsStore.profile.tiktok.startsWith('http')
-                      ? settingsStore.profile.tiktok
-                      : 'https://tiktok.com/@' + settingsStore.profile.tiktok.replace('@', '')
-                  "
+                  :href="settingsStore.profile.tiktok.startsWith('http') ? settingsStore.profile.tiktok : `https://tiktok.com/@${settingsStore.profile.tiktok}`"
                   target="_blank"
                 >
                   <q-tooltip>TikTok</q-tooltip>
@@ -750,11 +433,7 @@ onMounted(() => {
                   color="primary"
                   icon="fa-brands fa-instagram"
                   type="a"
-                  :href="
-                    settingsStore.profile.instagram.startsWith('http')
-                      ? settingsStore.profile.instagram
-                      : 'https://instagram.com/' + settingsStore.profile.instagram.replace('@', '')
-                  "
+                  :href="settingsStore.profile.instagram.startsWith('http') ? settingsStore.profile.instagram : `https://instagram.com/${settingsStore.profile.instagram}`"
                   target="_blank"
                 >
                   <q-tooltip>Instagram</q-tooltip>
@@ -765,7 +444,8 @@ onMounted(() => {
                   outline
                   color="primary"
                   icon="email"
-                  @click="showContactDialog = true"
+                  type="a"
+                  :href="`mailto:${settingsStore.profile.email}`"
                 >
                   <q-tooltip>Send Email</q-tooltip>
                 </q-btn>
@@ -777,7 +457,7 @@ onMounted(() => {
         <!-- 2. Dynamic Article Carousel Section -->
         <div
           v-else-if="getSectionType(section) === 'articles'"
-          class="q-mb-xl"
+          class="q-mb-xl full-width"
         >
           <ArticleCarousel
             :filter-type="getCustomSectionConfig(section).articleFilterType || 'all'"
@@ -786,43 +466,13 @@ onMounted(() => {
           />
         </div>
 
-        <!-- 3. Action Banner (The pill banner) Section -->
-        <div
+        <!-- 3. Action Pill Banner Section (Modular Widget) -->
+        <ActionPillBanner
           v-else-if="getSectionType(section) === 'actionBanner'"
-          class="max-width-container q-pa-md q-my-xl"
-        >
-          <div class="row justify-center">
-            <div class="col-12 col-md-10 col-lg-8">
-              <a
-                :href="getCustomSectionConfig(section).bannerUrl || bannerTargetUrl"
-                :target="(getCustomSectionConfig(section).bannerUrl || bannerTargetUrl).startsWith('http') ? '_blank' : undefined"
-                class="action-pill-banner row no-wrap items-center justify-between q-pa-md shadow-4"
-              >
-                <div class="banner-text q-pl-lg">
-                  <div class="text-h6 text-primary text-weight-medium line-height-tight q-mb-sm">
-                    {{
-                      getCustomSectionConfig(section).bannerText ||
-                      settingsStore.profile.actionBannerText ||
-                      'Acquista qui con codice sconto la tua Skin Care e integrazione personalizzata'
-                    }}
-                  </div>
-                </div>
-                <div class="banner-image q-pr-lg">
-                  <q-avatar size="100px" class="shadow-8">
-                    <q-btn
-                      color="primary"
-                      :label="getCustomSectionConfig(section).bannerButtonText || settingsStore.profile.actionBannerButtonText || 'Skin Care'"
-                      unelevated
-                      rounded
-                      padding="xs lg"
-                      icon-right="sym_o_procedure"
-                    />
-                  </q-avatar>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
+          :banner-text="getCustomSectionConfig(section).bannerText || settingsStore.profile.actionBannerText"
+          :button-text="getCustomSectionConfig(section).bannerButtonText || settingsStore.profile.actionBannerButtonText"
+          :target-url="getCustomSectionConfig(section).bannerUrl || bannerTargetUrl"
+        />
 
         <!-- 4. Product Grid Section -->
         <div
@@ -854,562 +504,29 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Dialogs -->
+    <!-- Modals & Specialized Dialogs -->
     <ContactDialog v-model="showContactDialog" />
     <ArticleFormDialog v-model="showArticleDialog" :initial-data="selectedArticle" />
     <ProductFormDialog v-model="showProductDialog" :initial-data="selectedProduct" />
 
-    <!-- Section Settings Dialog with Expandable / Maximizable Capacity -->
-    <q-dialog
+    <!-- Add Section Modal Dialog Component -->
+    <AddSectionDialog
+      v-model="showAddSectionDialog"
+      @add-section="addSection"
+    />
+
+    <!-- Section Settings Modal Dialog Component -->
+    <SectionSettingsDialog
       v-model="showSettingsDialog"
-      :maximized="isSettingsDialogMaximized"
-      transition-show="jump-down"
-      transition-hide="jump-up"
-    >
-      <q-card :style="dialogCardStyle" class="column no-wrap overflow-hidden">
-        <!-- Toolbar Header with Maximize & Expand Controls -->
-        <q-toolbar class="bg-primary text-white q-py-xs">
-          <q-icon :name="getSectionIcon(activeSettingsSection)" size="22px" class="q-mr-sm" />
-          <q-toolbar-title class="text-subtitle1 text-weight-bold">
-            Impostazioni: {{ getSectionLabel(activeSettingsSection) }}
-          </q-toolbar-title>
-
-          <!-- Toggle Width Mode (Compact 520px / Wide 780px) -->
-          <q-btn
-            v-if="!isSettingsDialogMaximized"
-            flat
-            round
-            dense
-            :icon="isSettingsDialogWide ? 'unfold_less' : 'unfold_more'"
-            class="q-mr-xs"
-            @click="isSettingsDialogWide = !isSettingsDialogWide"
-          >
-            <q-tooltip>{{ isSettingsDialogWide ? 'Riduci larghezza (520px)' : 'Espandi larghezza (780px)' }}</q-tooltip>
-          </q-btn>
-
-          <!-- Toggle Fullscreen Maximize -->
-          <q-btn
-            flat
-            round
-            dense
-            :icon="isSettingsDialogMaximized ? 'fullscreen_exit' : 'fullscreen'"
-            class="q-mr-xs"
-            @click="isSettingsDialogMaximized = !isSettingsDialogMaximized"
-          >
-            <q-tooltip>{{ isSettingsDialogMaximized ? 'Riduci finestra' : 'Ingrandisci a tutto schermo' }}</q-tooltip>
-          </q-btn>
-
-          <!-- Close Button -->
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-toolbar>
-
-        <q-card-section class="q-pa-lg col scroll">
-          <!-- Products Settings -->
-          <div v-if="getSectionType(activeSettingsSection) === 'products'" class="column q-gutter-y-md">
-            <q-input
-              v-model="sectionForm.productsTitle"
-              label="Titolo della Sezione Prodotti"
-              outlined
-              class="full-width"
-              placeholder="Es. I Miei Prodotti Preferiti"
-            />
-            <div class="row items-center justify-between q-pa-md bg-grey-2 rounded-borders">
-              <div>
-                <div class="text-subtitle2 text-weight-bold text-primary">Vuoi aggiungere un nuovo prodotto?</div>
-                <div class="text-caption text-grey-8">
-                  Crea e pubblica un nuovo prodotto con foto, prezzo, recensioni e ordine rapido WhatsApp.
-                </div>
-              </div>
-              <q-btn
-                color="primary"
-                icon="add"
-                label="Nuovo Prodotto"
-                unelevated
-                class="q-px-md"
-                @click="showSettingsDialog = false; openQuickAdd('products')"
-              />
-            </div>
-          </div>
-
-          <!-- Action Banner Settings -->
-          <div v-else-if="getSectionType(activeSettingsSection) === 'actionBanner'" class="column q-gutter-y-md">
-            <q-input
-              v-model="sectionForm.bannerText"
-              label="Testo Promozionale del Banner"
-              type="textarea"
-              outlined
-              autogrow
-              :rows="3"
-              class="full-width"
-              hint="Testo visualizzato in risalto nella pillola promozionale"
-            />
-            <div class="row q-col-gutter-md">
-              <div class="col-12 col-sm-6">
-                <q-input
-                  v-model="sectionForm.bannerButtonText"
-                  label="Testo del Bottone Azione"
-                  outlined
-                  placeholder="Es. Skin Care"
-                />
-              </div>
-              <div class="col-12 col-sm-6">
-                <q-input
-                  v-model="sectionForm.bannerUrl"
-                  label="Link di Destinazione (URL)"
-                  outlined
-                  hint="Lascia vuoto per collegare direttamente a WhatsApp"
-                />
-              </div>
-            </div>
-            <div class="q-pa-sm bg-grey-1 rounded-borders">
-              <q-toggle
-                v-model="sectionForm.bannerEnabled"
-                label="Banner Abilitato (Visibile in vetrina)"
-                color="positive"
-              />
-            </div>
-          </div>
-
-          <!-- Profile & Social Settings -->
-          <div v-else-if="getSectionType(activeSettingsSection) === 'profile'" class="column q-gutter-y-md">
-            <q-input
-              v-model="sectionForm.profileName"
-              label="Nome Visualizzato / Titolo Sezione"
-              outlined
-              class="full-width"
-            />
-            <q-input
-              v-model="sectionForm.profileBio"
-              label="Biografia / Testo della Sezione"
-              type="textarea"
-              outlined
-              autogrow
-              :rows="4"
-              class="full-width"
-              hint="Testo introduttivo o descrizione visualizzata nella sezione"
-            />
-
-            <!-- Typography & Layout Styling -->
-            <div class="q-pa-md bg-grey-1 rounded-borders">
-              <div class="text-subtitle2 text-weight-bold text-primary q-mb-sm row items-center">
-                <q-icon name="style" class="q-mr-xs" />
-                Stile Tipografico & Allineamento
-              </div>
-
-              <!-- Alignment -->
-              <div class="q-mb-sm">
-                <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Allineamento del Testo:</div>
-                <q-btn-toggle
-                  v-model="sectionForm.profileTextAlign"
-                  toggle-color="primary"
-                  flat
-                  dense
-                  no-caps
-                  class="bg-white rounded-borders shadow-1"
-                  :options="[
-                    { label: 'Sinistra', value: 'left', icon: 'format_align_left' },
-                    { label: 'Centro', value: 'center', icon: 'format_align_center' },
-                    { label: 'Destra', value: 'right', icon: 'format_align_right' },
-                    { label: 'Giustificato', value: 'justify', icon: 'format_align_justify' },
-                  ]"
-                />
-              </div>
-
-              <!-- Font & Weight (Bold) -->
-              <div class="row q-col-gutter-sm q-mb-sm">
-                <div class="col-12 col-sm-6">
-                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Carattere (Font):</div>
-                  <q-btn-toggle
-                    v-model="sectionForm.profileFontFamily"
-                    toggle-color="primary"
-                    flat
-                    dense
-                    no-caps
-                    class="full-width bg-white rounded-borders shadow-1"
-                    :options="[
-                      { label: 'Serif Elegante', value: 'serif' },
-                      { label: 'Sans Moderno', value: 'sans' },
-                    ]"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Spessore Titolo (Bold):</div>
-                  <q-btn-toggle
-                    v-model="sectionForm.profileFontWeight"
-                    toggle-color="primary"
-                    flat
-                    dense
-                    no-caps
-                    class="full-width bg-white rounded-borders shadow-1"
-                    :options="[
-                      { label: 'Leggero', value: 'light' },
-                      { label: 'Normale', value: 'normal' },
-                      { label: 'Grassetto (Bold)', value: 'bold' },
-                    ]"
-                  />
-                </div>
-              </div>
-
-              <!-- Title Size & Max Width -->
-              <div class="row q-col-gutter-sm q-mb-sm">
-                <div class="col-12 col-sm-6">
-                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Dimensione Titolo:</div>
-                  <q-btn-toggle
-                    v-model="sectionForm.profileTitleSize"
-                    toggle-color="primary"
-                    flat
-                    dense
-                    no-caps
-                    class="full-width bg-white rounded-borders shadow-1"
-                    :options="[
-                      { label: 'Grande (H2)', value: 'h2' },
-                      { label: 'Medio (H3)', value: 'h3' },
-                      { label: 'Compatto (H4)', value: 'h4' },
-                    ]"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Ampiezza Massima Blocco:</div>
-                  <q-btn-toggle
-                    v-model="sectionForm.profileMaxWidth"
-                    toggle-color="primary"
-                    flat
-                    dense
-                    no-caps
-                    class="full-width bg-white rounded-borders shadow-1"
-                    :options="[
-                      { label: 'Stretta', value: 'sm' },
-                      { label: 'Media', value: 'md' },
-                      { label: 'Larga', value: 'lg' },
-                      { label: 'Piena', value: 'full' },
-                    ]"
-                  />
-                </div>
-              </div>
-
-              <!-- Toggles: Avatar & Socials -->
-              <div class="row q-col-gutter-sm q-mt-xs">
-                <div class="col-12 col-sm-6">
-                  <q-toggle
-                    v-model="sectionForm.profileShowAvatar"
-                    label="Mostra Foto Profilo / Avatar"
-                    color="primary"
-                  />
-                </div>
-                <div class="col-12 col-sm-6">
-                  <q-toggle
-                    v-model="sectionForm.profileShowSocials"
-                    label="Mostra Icone Canali Social"
-                    color="primary"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- Social Media & Contact Links -->
-            <div v-if="sectionForm.profileShowSocials" class="q-mt-sm">
-              <div class="text-subtitle2 text-weight-bold text-primary q-mb-sm row items-center">
-                <q-icon name="share" class="q-mr-xs" />
-                Contatti & Canali Social
-              </div>
-              <div class="row q-col-gutter-sm">
-                <div class="col-12 col-sm-6">
-                  <q-input
-                    v-model="sectionForm.profileWhatsapp"
-                    label="WhatsApp (es. +393331234567)"
-                    outlined
-                    dense
-                  >
-                    <template #prepend>
-                      <q-icon name="fa-brands fa-whatsapp" color="positive" size="18px" />
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-12 col-sm-6">
-                  <q-input
-                    v-model="sectionForm.profileInstagram"
-                    label="Instagram (@username o link)"
-                    outlined
-                    dense
-                  >
-                    <template #prepend>
-                      <q-icon name="fa-brands fa-instagram" color="pink" size="18px" />
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-12 col-sm-6">
-                  <q-input
-                    v-model="sectionForm.profileTiktok"
-                    label="TikTok (@username o link)"
-                    outlined
-                    dense
-                  >
-                    <template #prepend>
-                      <q-icon name="fa-brands fa-tiktok" size="18px" />
-                    </template>
-                  </q-input>
-                </div>
-                <div class="col-12 col-sm-6">
-                  <q-input
-                    v-model="sectionForm.profileEmail"
-                    label="Email di Contatto"
-                    outlined
-                    dense
-                  >
-                    <template #prepend>
-                      <q-icon name="email" color="primary" size="18px" />
-                    </template>
-                  </q-input>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Articles Settings & Drag & Drop Reordering -->
-          <div v-else-if="getSectionType(activeSettingsSection) === 'articles'" class="column q-gutter-y-md">
-            <!-- Filter Type for this Carousel -->
-            <div class="q-pa-sm bg-grey-1 rounded-borders">
-              <div class="text-caption text-weight-bold text-primary q-mb-xs">
-                Contenuti da mostrare in questo carosello:
-              </div>
-              <q-btn-toggle
-                v-model="sectionForm.articleFilterType"
-                toggle-color="primary"
-                flat
-                dense
-                no-caps
-                :options="[
-                  { label: 'Tutti gli Articoli', value: 'all' },
-                  { label: '📸 Solo Testimonianze', value: 'testimonial' },
-                  { label: '🧴 Solo Schede Prodotto', value: 'product' },
-                ]"
-              />
-            </div>
-
-            <!-- Header + Quick Add -->
-            <div class="row items-center justify-between q-mt-sm">
-              <div>
-                <div class="text-subtitle2 text-weight-bold text-primary">
-                  Ordina Articoli (Trascina o usa le frecce):
-                </div>
-                <div class="text-caption text-grey-7">
-                  L'ordine stabilisce la sequenza di scorrimento delle slide.
-                </div>
-              </div>
-              <q-btn
-                color="primary"
-                size="sm"
-                icon="add"
-                label="Nuovo Articolo"
-                unelevated
-                @click="showSettingsDialog = false; openQuickAdd('articles')"
-              />
-            </div>
-
-            <!-- Draggable List of Articles -->
-            <div class="column q-gutter-y-xs q-mt-xs">
-              <div
-                v-for="(art, aIdx) in settingsStore.articles"
-                :key="art.id"
-                draggable="true"
-                class="article-order-item row items-center justify-between q-pa-sm rounded-borders transition-easy"
-                :class="{ 'bg-grey-2': art.active, 'bg-grey-3 text-grey-6': !art.active }"
-                @dragstart="onArticleDragStart(aIdx)"
-                @dragover.prevent
-                @drop="onArticleDrop(aIdx)"
-              >
-                <!-- Left: Drag Handle + Thumbnail + Info -->
-                <div class="row items-center q-gutter-sm col overflow-hidden">
-                  <q-icon name="drag_indicator" size="20px" class="cursor-grab text-grey-7 flex-shrink-0" />
-                  <q-avatar rounded size="42px" class="bg-grey-4 flex-shrink-0">
-                    <img v-if="art.imageUrl" :src="art.imageUrl" style="object-fit: cover" />
-                    <q-icon v-else name="image" color="grey" />
-                  </q-avatar>
-                  <div class="col ellipsis">
-                    <div class="text-body2 text-weight-bold ellipsis">{{ art.title }}</div>
-                    <div class="text-caption text-grey-7 row items-center q-gutter-xs">
-                      <span>#{{ aIdx + 1 }}</span>
-                      <span>•</span>
-                      <span>{{ art.layoutConfig?.articleType === 'product' ? '🧴 Prodotto' : '📸 Testimonianza' }}</span>
-                      <span v-if="!art.active" class="text-negative text-weight-bold">• Nascosto</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Right: Ordering & Actions -->
-                <div class="row items-center q-gutter-xs flex-shrink-0">
-                  <q-btn
-                    dense
-                    flat
-                    round
-                    size="sm"
-                    icon="arrow_upward"
-                    :disable="aIdx === 0"
-                    @click="moveArticle(aIdx, 'up')"
-                  >
-                    <q-tooltip>Sposta Su</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    dense
-                    flat
-                    round
-                    size="sm"
-                    icon="arrow_downward"
-                    :disable="aIdx === settingsStore.articles.length - 1"
-                    @click="moveArticle(aIdx, 'down')"
-                  >
-                    <q-tooltip>Sposta Giù</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    dense
-                    flat
-                    round
-                    size="sm"
-                    :icon="art.active ? 'visibility' : 'visibility_off'"
-                    :color="art.active ? 'positive' : 'grey'"
-                    @click="toggleArticleStatus(art)"
-                  >
-                    <q-tooltip>{{ art.active ? 'Nascondi dalla vetrina' : 'Mostra nella vetrina' }}</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    dense
-                    flat
-                    round
-                    size="sm"
-                    icon="edit"
-                    color="primary"
-                    @click="showSettingsDialog = false; openEditArticle(art)"
-                  >
-                    <q-tooltip>Modifica Articolo</q-tooltip>
-                  </q-btn>
-                  <q-btn
-                    dense
-                    flat
-                    round
-                    size="sm"
-                    icon="delete"
-                    color="negative"
-                    @click="confirmDeleteArticle(art)"
-                  >
-                    <q-tooltip>Elimina Articolo</q-tooltip>
-                  </q-btn>
-                </div>
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-actions align="right" class="q-pa-md bg-grey-1">
-          <q-btn flat label="Annulla" color="grey-7" v-close-popup class="q-px-md" />
-          <q-btn unelevated label="Salva Modifiche" color="primary" class="q-px-xl text-weight-bold" @click="saveSectionSettings" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Add Section Dialog -->
-    <q-dialog v-model="showAddSectionDialog">
-      <q-card style="width: 580px; max-width: 95vw" class="rounded-borders overflow-hidden">
-        <q-toolbar class="bg-primary text-white">
-          <q-icon name="add_circle" size="22px" class="q-mr-sm" />
-          <q-toolbar-title class="text-subtitle1 text-weight-bold">
-            Aggiungi Nuova Sezione alla Vetrina
-          </q-toolbar-title>
-          <q-btn flat round dense icon="close" v-close-popup />
-        </q-toolbar>
-
-        <q-card-section class="q-pa-md">
-          <div class="text-caption text-grey-8 q-mb-md">
-            Scegli il tipo di blocco da inserire. Potrai personalizzarne contenuti, testi e posizione in qualsiasi momento.
-          </div>
-
-          <div class="column q-gutter-y-sm">
-            <!-- 0. Profilo, Chi Sono & Filosofia -->
-            <q-card
-              flat
-              bordered
-              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
-              @click="addSection('profile')"
-            >
-              <div class="row items-center q-gutter-md">
-                <q-avatar color="primary" text-color="white" icon="person" size="44px" />
-                <div>
-                  <div class="text-subtitle1 text-weight-bold text-primary">Profilo, Chi Sono & Filosofia</div>
-                  <div class="text-caption text-grey-7">
-                    Sezione biografia, storia del salone o citazione con stile tipografico, allineamento e grassetto personalizzabili.
-                  </div>
-                </div>
-              </div>
-              <q-icon name="chevron_right" size="24px" color="grey-6" />
-            </q-card>
-
-            <!-- 1. Carosello Articoli -->
-            <q-card
-              flat
-              bordered
-              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
-              @click="addSection('articles')"
-            >
-              <div class="row items-center q-gutter-md">
-                <q-avatar color="primary" text-color="white" icon="view_carousel" size="44px" />
-                <div>
-                  <div class="text-subtitle1 text-weight-bold text-primary">Carosello Articoli & Storie</div>
-                  <div class="text-caption text-grey-7">
-                    Carosello dinamico per testimonianze prima/dopo, storie cliniche o consigli di bellezza.
-                  </div>
-                </div>
-              </div>
-              <q-icon name="chevron_right" size="24px" color="grey-6" />
-            </q-card>
-
-            <!-- 2. Griglia Prodotti -->
-            <q-card
-              flat
-              bordered
-              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
-              @click="addSection('products')"
-            >
-              <div class="row items-center q-gutter-md">
-                <q-avatar color="primary" text-color="white" icon="grid_view" size="44px" />
-                <div>
-                  <div class="text-subtitle1 text-weight-bold text-primary">Griglia Prodotti</div>
-                  <div class="text-caption text-grey-7">
-                    Vetrina catalogo prodotti con foto, prezzo, recensioni e ordine immediato WhatsApp.
-                  </div>
-                </div>
-              </div>
-              <q-icon name="chevron_right" size="24px" color="grey-6" />
-            </q-card>
-
-            <!-- 3. Banner Promozionale -->
-            <q-card
-              flat
-              bordered
-              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
-              @click="addSection('actionBanner')"
-            >
-              <div class="row items-center q-gutter-md">
-                <q-avatar color="primary" text-color="white" icon="smart_button" size="44px" />
-                <div>
-                  <div class="text-subtitle1 text-weight-bold text-primary">Banner Promozionale / Azione</div>
-                  <div class="text-caption text-grey-7">
-                    Pillola promozionale con bottone d'azione per sconti, contatti WhatsApp o trattamenti.
-                  </div>
-                </div>
-              </div>
-              <q-icon name="chevron_right" size="24px" color="grey-6" />
-            </q-card>
-          </div>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-actions align="right" class="q-pa-sm bg-grey-1">
-          <q-btn flat label="Annulla" color="grey-7" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      :section-id="activeSettingsSection"
+      :custom-config="getCustomSectionConfig(activeSettingsSection)"
+      :profile="settingsStore.profile"
+      :articles="settingsStore.articles"
+      @save="handleSaveSectionSettings"
+      @quick-add="openQuickAdd"
+      @open-edit-article="openEditArticle"
+      @reorder-articles="handleReorderArticles"
+    />
   </q-page>
 </template>
 
@@ -1425,25 +542,6 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-/* Action Pill Banner Styles */
-.action-pill-banner {
-  background-color: #f7f7f4;
-  border-radius: 100px;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.action-pill-banner:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-  background-color: #ffffff;
-}
-
-.line-height-tight {
-  line-height: 1.25;
-}
-
 /* Visual Builder In-Place Styles */
 .visual-builder-section-wrapper {
   transition: all 0.25s ease;
@@ -1454,12 +552,6 @@ onMounted(() => {
   &:hover {
     outline: 2px dashed rgba(52, 20, 20, 0.45);
     outline-offset: -2px;
-
-    .visual-builder-toolbar {
-      opacity: 1;
-      transform: translateY(0);
-      pointer-events: auto;
-    }
   }
 }
 
@@ -1473,72 +565,5 @@ onMounted(() => {
     rgba(255, 255, 255, 0.7) 10px,
     rgba(255, 255, 255, 0.7) 20px
   );
-}
-
-.hidden-section-banner {
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.2);
-}
-
-/* Floating Toolbar */
-.visual-builder-toolbar {
-  position: absolute;
-  top: 10px;
-  right: 16px;
-  z-index: 80;
-  background: rgba(17, 24, 39, 0.92);
-  backdrop-filter: blur(8px);
-  border-radius: 9999px;
-  padding: 4px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  opacity: 0.85;
-  transform: translateY(0);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-
-  .section-tag {
-    font-size: 0.78rem;
-    letter-spacing: 0.02em;
-  }
-}
-
-@media (max-width: 600px) {
-  .action-pill-banner {
-    border-radius: 25px;
-    padding: 12px !important;
-  }
-  .banner-text .text-h6 {
-    font-size: 0.9rem;
-  }
-  .banner-image .q-avatar {
-    size: 85px !important;
-    width: 85px !important;
-    height: 85px !important;
-  }
-  .visual-builder-toolbar {
-    top: 6px;
-    right: 8px;
-    padding: 2px 6px;
-  }
-}
-
-.article-order-item {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  &:hover {
-    background-color: #f0f1f3 !important;
-  }
-}
-
-.cursor-grab {
-  cursor: grab;
-  &:active {
-    cursor: grabbing;
-  }
-}
-
-.hover-scale {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
-  }
 }
 </style>

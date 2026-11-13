@@ -206,5 +206,31 @@
   - [x] `yarn build`: compilazione SPA riuscita con successo.
 
 ---
+
+### 🧩 FASE 12: Decomposizione Modulare & Riduzione Monoliti (§0.2 / §0.3 AGENTS.md)
+- [x] **12.1 Refactoring `src/pages/LandingPage.vue`**:
+  - Ridotto da 1.544 righe a 569 righe (-63% di volume codice).
+  - Estratti componenti specializzati e riutilizzabili:
+    - `src/components/widgets/ActionPillBanner.vue` (91 righe)
+    - `src/components/builder/SectionToolbar.vue` (173 righe)
+    - `src/components/builder/AddSectionDialog.vue` (142 righe)
+    - `src/components/builder/SectionSettingsDialog.vue` (677 righe)
+- [x] **12.2 Refactoring `src/pages/admin/AdminSettings.vue`**:
+  - Ridotto da 699 righe a 110 righe (-84% di volume codice).
+  - Estratti sub-componenti dedicati per ciascun tab:
+    - `src/components/settings/ProfileSettingsTab.vue` (189 righe)
+    - `src/components/settings/BrandingSettingsTab.vue` (129 righe)
+    - `src/components/settings/QrCodesSettingsTab.vue` (210 righe)
+    - `src/components/settings/EmailConfigTab.vue` (62 righe)
+- [x] **12.3 Decomposizione Store Pinia `src/stores/settings.ts`**:
+  - Ridotto da 563 righe a 389 righe (-31%).
+  - Estratto store dedicato `src/stores/articles.ts` (196 righe) con persistenza Stale-While-Revalidate e sincronizzazione Firestore in tempo reale.
+  - Mantenimento al 100% della retrocompatibilità tramite getter e metodi delegati trasparenti in `settingsStore`.
+- [x] **12.4 Verifica Qualità & Compilazione Completa**:
+  - `yarn lint`: 0 errori e 0 warning.
+  - `npx vue-tsc --noEmit`: 0 errori TypeScript.
+  - `yarn build`: compilazione SPA completata con successo in 13.79s.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
