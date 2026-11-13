@@ -47,11 +47,20 @@ export interface Article {
 
 export interface CustomSectionConfig {
   title?: string;
+  bio?: string;
   bannerText?: string;
   bannerButtonText?: string;
   bannerUrl?: string;
   bannerEnabled?: boolean;
   articleFilterType?: 'all' | 'testimonial' | 'product';
+  // Typography, alignment & style options (profile / bio / text blocks)
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  fontFamily?: 'serif' | 'sans';
+  fontWeight?: 'light' | 'normal' | 'bold';
+  titleSize?: 'h2' | 'h3' | 'h4';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'full';
+  showAvatar?: boolean;
+  showSocials?: boolean;
 }
 
 export interface PublicProfile {

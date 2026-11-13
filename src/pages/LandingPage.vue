@@ -69,6 +69,13 @@ const sectionForm = ref<{
   profileTiktok: string;
   profileEmail: string;
   articleFilterType: 'all' | 'testimonial' | 'product';
+  profileTextAlign: 'left' | 'center' | 'right' | 'justify';
+  profileFontFamily: 'serif' | 'sans';
+  profileFontWeight: 'light' | 'normal' | 'bold';
+  profileTitleSize: 'h2' | 'h3' | 'h4';
+  profileMaxWidth: 'sm' | 'md' | 'lg' | 'full';
+  profileShowAvatar: boolean;
+  profileShowSocials: boolean;
 }>({
   productsTitle: '',
   bannerText: '',
@@ -82,7 +89,42 @@ const sectionForm = ref<{
   profileTiktok: '',
   profileEmail: '',
   articleFilterType: 'all',
+  profileTextAlign: 'center',
+  profileFontFamily: 'serif',
+  profileFontWeight: 'normal',
+  profileTitleSize: 'h2',
+  profileMaxWidth: 'md',
+  profileShowAvatar: true,
+  profileShowSocials: true,
 });
+
+// Profile Typography & Style Helpers
+const getProfileTitleClass = (secId: string): string => {
+  const cfg = getCustomSectionConfig(secId);
+  const size = cfg.titleSize || 'h2';
+  const sizeClass = size === 'h4' ? 'text-h4' : size === 'h3' ? 'text-h3' : 'text-h2';
+  const fontClass = cfg.fontFamily === 'sans' ? 'font-sans' : 'font-serif';
+  const weightClass = cfg.fontWeight === 'bold' ? 'text-weight-bold' : cfg.fontWeight === 'light' ? 'text-weight-light' : 'text-weight-medium';
+  return `${sizeClass} ${fontClass} ${weightClass}`;
+};
+
+const getProfileAlignClass = (secId: string): string => {
+  const cfg = getCustomSectionConfig(secId);
+  const align = cfg.textAlign || 'center';
+  if (align === 'left') return 'text-left items-start';
+  if (align === 'right') return 'text-right items-end';
+  if (align === 'justify') return 'text-justify items-center';
+  return 'text-center items-center';
+};
+
+const getProfileMaxWidthStyle = (secId: string) => {
+  const cfg = getCustomSectionConfig(secId);
+  const maxW = cfg.maxWidth || 'md';
+  if (maxW === 'sm') return { maxWidth: '520px', width: '100%', margin: '0 auto' };
+  if (maxW === 'lg') return { maxWidth: '960px', width: '100%', margin: '0 auto' };
+  if (maxW === 'full') return { maxWidth: '100%', width: '100%' };
+  return { maxWidth: '720px', width: '100%', margin: '0 auto' };
+};
 
 // Section type helpers
 const getSectionType = (secId: string): string => {
@@ -292,14 +334,26 @@ const openAddSection = (index?: number) => {
   showAddSectionDialog.value = true;
 };
 
-const addSection = async (type: 'articles' | 'products' | 'actionBanner') => {
+const addSection = async (type: 'profile' | 'articles' | 'products' | 'actionBanner') => {
   const list = [...sectionsList.value];
   const newId = `${type}_custom_${Date.now().toString(36)}`;
   const insertAt = targetAddIndex.value !== null ? targetAddIndex.value + 1 : list.length;
   list.splice(insertAt, 0, newId);
 
   const customSections = { ...(settingsStore.profile.customSections || {}) };
-  if (type === 'products') {
+  if (type === 'profile') {
+    customSections[newId] = {
+      title: 'La Mia Filosofia & Consulenza',
+      bio: 'Condividi qui una citazione, la filosofia del tuo salone o una presentazione personale approfondita.',
+      textAlign: 'center',
+      fontFamily: 'serif',
+      fontWeight: 'normal',
+      titleSize: 'h2',
+      maxWidth: 'md',
+      showAvatar: false,
+      showSocials: false,
+    };
+  } else if (type === 'products') {
     customSections[newId] = { title: 'Nuova Selezione Prodotti' };
   } else if (type === 'actionBanner') {
     customSections[newId] = {
@@ -358,13 +412,20 @@ const openSectionSettings = (sectionId: string) => {
     bannerButtonText: custom.bannerButtonText || settingsStore.profile.actionBannerButtonText || 'Skin Care',
     bannerUrl: custom.bannerUrl || settingsStore.profile.actionBannerUrl || '',
     bannerEnabled: (custom.bannerEnabled !== undefined ? custom.bannerEnabled : settingsStore.profile.actionBannerEnabled) !== false,
-    profileName: settingsStore.profile.name || '',
-    profileBio: settingsStore.profile.bio || '',
+    profileName: custom.title || settingsStore.profile.name || '',
+    profileBio: custom.bio || settingsStore.profile.bio || '',
     profileWhatsapp: settingsStore.profile.whatsapp || '',
     profileInstagram: settingsStore.profile.instagram || '',
     profileTiktok: settingsStore.profile.tiktok || '',
     profileEmail: settingsStore.profile.email || '',
     articleFilterType: custom.articleFilterType || 'all',
+    profileTextAlign: custom.textAlign || 'center',
+    profileFontFamily: custom.fontFamily || 'serif',
+    profileFontWeight: custom.fontWeight || 'normal',
+    profileTitleSize: custom.titleSize || 'h2',
+    profileMaxWidth: custom.maxWidth || 'md',
+    profileShowAvatar: custom.showAvatar !== undefined ? custom.showAvatar : (sectionId === 'profile'),
+    profileShowSocials: custom.showSocials !== undefined ? custom.showSocials : (sectionId === 'profile'),
   };
   showSettingsDialog.value = true;
 };
@@ -414,14 +475,32 @@ const saveSectionSettings = async () => {
     };
     await settingsStore.updateProfile({ customSections });
   } else if (type === 'profile') {
-    await settingsStore.updateProfile({
-      name: sectionForm.value.profileName,
+    const customSections = { ...(settingsStore.profile.customSections || {}) };
+    customSections[sectionId] = {
+      ...customSections[sectionId],
+      title: sectionForm.value.profileName,
       bio: sectionForm.value.profileBio,
-      whatsapp: sectionForm.value.profileWhatsapp,
-      instagram: sectionForm.value.profileInstagram,
-      tiktok: sectionForm.value.profileTiktok,
-      email: sectionForm.value.profileEmail,
-    });
+      textAlign: sectionForm.value.profileTextAlign,
+      fontFamily: sectionForm.value.profileFontFamily,
+      fontWeight: sectionForm.value.profileFontWeight,
+      titleSize: sectionForm.value.profileTitleSize,
+      maxWidth: sectionForm.value.profileMaxWidth,
+      showAvatar: sectionForm.value.profileShowAvatar,
+      showSocials: sectionForm.value.profileShowSocials,
+    };
+    if (sectionId === 'profile') {
+      await settingsStore.updateProfile({
+        name: sectionForm.value.profileName,
+        bio: sectionForm.value.profileBio,
+        whatsapp: sectionForm.value.profileWhatsapp,
+        instagram: sectionForm.value.profileInstagram,
+        tiktok: sectionForm.value.profileTiktok,
+        email: sectionForm.value.profileEmail,
+        customSections,
+      });
+    } else {
+      await settingsStore.updateProfile({ customSections });
+    }
   }
 
   showSettingsDialog.value = false;
@@ -581,12 +660,15 @@ onMounted(() => {
           Questa sezione è <strong>nascosta ai clienti</strong>. Clicca sull'icona occhio nella barra sovrastante per riattivarla.
         </div>
 
-        <!-- 1. Hero / Profile Section -->
+        <!-- 1. Hero / Profile / Bio Section -->
         <div
           v-if="getSectionType(section) === 'profile'"
           class="row justify-center items-center q-py-xl q-px-md relative-position min-h-hero"
         >
-          <div class="col-12 col-md-auto column flex-center text-center">
+          <div
+            :class="`col-12 col-md-auto column ${getProfileAlignClass(section)}`"
+            :style="getProfileMaxWidthStyle(section)"
+          >
             <template v-if="settingsStore.loading">
               <q-skeleton type="circle" size="150px" class="q-mb-md" />
               <q-skeleton type="text" width="200px" class="text-h2" />
@@ -599,7 +681,12 @@ onMounted(() => {
             </template>
 
             <template v-else>
-              <q-avatar size="150px" class="q-mb-md shadow-3">
+              <!-- Avatar (shown if showAvatar !== false) -->
+              <q-avatar
+                v-if="getCustomSectionConfig(section).showAvatar !== false && (settingsStore.profile.avatarUrl || isPreview)"
+                size="150px"
+                class="q-mb-md shadow-3"
+              >
                 <q-skeleton v-if="!settingsStore.profile.avatarUrl" type="circle" size="150px" />
                 <img
                   v-else
@@ -607,15 +694,27 @@ onMounted(() => {
                   style="object-fit: cover; width: 100%; height: 100%"
                 />
               </q-avatar>
-              <div class="text-h2 text-primary q-mb-sm font-serif">
-                {{ settingsStore.profile.name }}
-              </div>
-              <div class="text-subtitle1 text-grey-8" style="max-width: 400px">
-                {{ settingsStore.profile.bio }}
+
+              <!-- Title with dynamic size, font, weight, alignment -->
+              <div
+                :class="`text-primary q-mb-sm ${getProfileTitleClass(section)} ${getProfileAlignClass(section)}`"
+              >
+                {{ getCustomSectionConfig(section).title || settingsStore.profile.name }}
               </div>
 
-              <!-- Social Media Links -->
-              <div class="row q-gutter-md q-mt-lg justify-center">
+              <!-- Bio with dynamic style, alignment -->
+              <div
+                :class="`text-subtitle1 text-grey-8 ${getProfileAlignClass(section)}`"
+                style="line-height: 1.6"
+              >
+                {{ getCustomSectionConfig(section).bio || settingsStore.profile.bio }}
+              </div>
+
+              <!-- Social Media Links (shown if showSocials !== false) -->
+              <div
+                v-if="getCustomSectionConfig(section).showSocials !== false"
+                class="row q-gutter-md q-mt-lg justify-center"
+              >
                 <q-btn
                   v-if="settingsStore.profile.whatsapp"
                   round
@@ -875,23 +974,140 @@ onMounted(() => {
           <div v-else-if="getSectionType(activeSettingsSection) === 'profile'" class="column q-gutter-y-md">
             <q-input
               v-model="sectionForm.profileName"
-              label="Nome Visualizzato / Titolo Vetrina"
+              label="Nome Visualizzato / Titolo Sezione"
               outlined
               class="full-width"
             />
             <q-input
               v-model="sectionForm.profileBio"
-              label="Biografia / Sottotitolo"
+              label="Biografia / Testo della Sezione"
               type="textarea"
               outlined
               autogrow
               :rows="4"
               class="full-width"
-              hint="Descrizione introduttiva visualizzata sotto il nome nella parte alta della vetrina"
+              hint="Testo introduttivo o descrizione visualizzata nella sezione"
             />
 
+            <!-- Typography & Layout Styling -->
+            <div class="q-pa-md bg-grey-1 rounded-borders">
+              <div class="text-subtitle2 text-weight-bold text-primary q-mb-sm row items-center">
+                <q-icon name="style" class="q-mr-xs" />
+                Stile Tipografico & Allineamento
+              </div>
+
+              <!-- Alignment -->
+              <div class="q-mb-sm">
+                <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Allineamento del Testo:</div>
+                <q-btn-toggle
+                  v-model="sectionForm.profileTextAlign"
+                  toggle-color="primary"
+                  flat
+                  dense
+                  no-caps
+                  class="bg-white rounded-borders shadow-1"
+                  :options="[
+                    { label: 'Sinistra', value: 'left', icon: 'format_align_left' },
+                    { label: 'Centro', value: 'center', icon: 'format_align_center' },
+                    { label: 'Destra', value: 'right', icon: 'format_align_right' },
+                    { label: 'Giustificato', value: 'justify', icon: 'format_align_justify' },
+                  ]"
+                />
+              </div>
+
+              <!-- Font & Weight (Bold) -->
+              <div class="row q-col-gutter-sm q-mb-sm">
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Carattere (Font):</div>
+                  <q-btn-toggle
+                    v-model="sectionForm.profileFontFamily"
+                    toggle-color="primary"
+                    flat
+                    dense
+                    no-caps
+                    class="full-width bg-white rounded-borders shadow-1"
+                    :options="[
+                      { label: 'Serif Elegante', value: 'serif' },
+                      { label: 'Sans Moderno', value: 'sans' },
+                    ]"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Spessore Titolo (Bold):</div>
+                  <q-btn-toggle
+                    v-model="sectionForm.profileFontWeight"
+                    toggle-color="primary"
+                    flat
+                    dense
+                    no-caps
+                    class="full-width bg-white rounded-borders shadow-1"
+                    :options="[
+                      { label: 'Leggero', value: 'light' },
+                      { label: 'Normale', value: 'normal' },
+                      { label: 'Grassetto (Bold)', value: 'bold' },
+                    ]"
+                  />
+                </div>
+              </div>
+
+              <!-- Title Size & Max Width -->
+              <div class="row q-col-gutter-sm q-mb-sm">
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Dimensione Titolo:</div>
+                  <q-btn-toggle
+                    v-model="sectionForm.profileTitleSize"
+                    toggle-color="primary"
+                    flat
+                    dense
+                    no-caps
+                    class="full-width bg-white rounded-borders shadow-1"
+                    :options="[
+                      { label: 'Grande (H2)', value: 'h2' },
+                      { label: 'Medio (H3)', value: 'h3' },
+                      { label: 'Compatto (H4)', value: 'h4' },
+                    ]"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="text-caption text-weight-bold text-grey-8 q-mb-xs">Ampiezza Massima Blocco:</div>
+                  <q-btn-toggle
+                    v-model="sectionForm.profileMaxWidth"
+                    toggle-color="primary"
+                    flat
+                    dense
+                    no-caps
+                    class="full-width bg-white rounded-borders shadow-1"
+                    :options="[
+                      { label: 'Stretta', value: 'sm' },
+                      { label: 'Media', value: 'md' },
+                      { label: 'Larga', value: 'lg' },
+                      { label: 'Piena', value: 'full' },
+                    ]"
+                  />
+                </div>
+              </div>
+
+              <!-- Toggles: Avatar & Socials -->
+              <div class="row q-col-gutter-sm q-mt-xs">
+                <div class="col-12 col-sm-6">
+                  <q-toggle
+                    v-model="sectionForm.profileShowAvatar"
+                    label="Mostra Foto Profilo / Avatar"
+                    color="primary"
+                  />
+                </div>
+                <div class="col-12 col-sm-6">
+                  <q-toggle
+                    v-model="sectionForm.profileShowSocials"
+                    label="Mostra Icone Canali Social"
+                    color="primary"
+                  />
+                </div>
+              </div>
+            </div>
+
             <!-- Social Media & Contact Links -->
-            <div class="q-mt-sm">
+            <div v-if="sectionForm.profileShowSocials" class="q-mt-sm">
               <div class="text-subtitle2 text-weight-bold text-primary q-mb-sm row items-center">
                 <q-icon name="share" class="q-mr-xs" />
                 Contatti & Canali Social
@@ -1109,6 +1325,25 @@ onMounted(() => {
           </div>
 
           <div class="column q-gutter-y-sm">
+            <!-- 0. Profilo, Chi Sono & Filosofia -->
+            <q-card
+              flat
+              bordered
+              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
+              @click="addSection('profile')"
+            >
+              <div class="row items-center q-gutter-md">
+                <q-avatar color="primary" text-color="white" icon="person" size="44px" />
+                <div>
+                  <div class="text-subtitle1 text-weight-bold text-primary">Profilo, Chi Sono & Filosofia</div>
+                  <div class="text-caption text-grey-7">
+                    Sezione biografia, storia del salone o citazione con stile tipografico, allineamento e grassetto personalizzabili.
+                  </div>
+                </div>
+              </div>
+              <q-icon name="chevron_right" size="24px" color="grey-6" />
+            </q-card>
+
             <!-- 1. Carosello Articoli -->
             <q-card
               flat

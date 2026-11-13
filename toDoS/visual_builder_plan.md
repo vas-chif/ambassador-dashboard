@@ -138,6 +138,22 @@
 
 ---
 
+### 👤 FASE 9: Sezione Profilo Dinamica, Multi-Bio & Tipografia Avanzata (Allineamenti, Stili, Bold)
+- [x] **9.1 Supporto per Sezioni Profilo / Bio Aggiuntive (`profile_custom_...`)**:
+  - [x] Aggiunta opzione 👤 **Profilo, Chi Sono & Filosofia** nel dialog `➕ Aggiungi Nuova Sezione`.
+  - [x] Configurazione indipendente per ogni istanza profilo (titolo personalizzato, testo bio/storia, avatar opzionale, social opzionali).
+- [x] **9.2 Personalizzazione Avanzata Stile, Allineamento & Larghezza**:
+  - [x] **Allineamento Testo**: Sinistra, Centro, Destra, Giustificato (`textAlign: 'left' | 'center' | 'right' | 'justify'`).
+  - [x] **Stile Tipografico & Peso**: Selezione Font (Serif elegante vs Sans-serif moderno) e Peso (Light, Normal, Bold / Grassetto).
+  - [x] **Dimensione Titolo**: Dimensione regolabile (H2 grande, H3 medio, H4 compatto).
+  - [x] **Ampiezza Massima del Testo**: Larghezza contenitore regolabile (Stretta 450px, Media 650px, Larga 850px, Piena 100%).
+  - [x] **Opzioni Visibilità Elementi**: Toggle Mostra/Nascondi Avatar, Toggle Mostra/Nascondi Icone Social per le sezioni profilo.
+- [x] **9.3 Interfaccia di Configurazione Diretta in Anteprima ([LandingPage.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/LandingPage.vue))**:
+  - [x] Aggiornamento del dialog impostazioni profilo con controlli intuitivi a pulsanti/toggle per allineamenti, pesi e dimensioni.
+  - [x] Anteprima istantanea e salvataggio reattivo su store locale + Firestore.
+
+---
+
 ### 🛡️ FASE 5: Sicurezza, Caching Locale & Performance (*Cybersecurity & Architect*)
 - [x] **5.1 Caching Locale Obbligatorio (Pattern Stale-While-Revalidate)**:
   - [x] Salvataggio immediato in `localStorage` delle preferenze di disposizione e visibilità per azzerare tempi di caricamento (0ms).
