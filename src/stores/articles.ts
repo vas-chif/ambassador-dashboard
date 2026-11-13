@@ -15,7 +15,6 @@ import {
   deleteDoc,
   onSnapshot,
   query,
-  orderBy,
 } from 'firebase/firestore';
 import type { Unsubscribe } from 'firebase/firestore';
 import { db } from 'src/boot/firebase';
@@ -56,7 +55,7 @@ export const useArticlesStore = defineStore('articles', () => {
     if (unsubscribeArticles) return;
 
     try {
-      const q = query(collection(db, 'articles'), orderBy('order', 'asc'));
+      const q = query(collection(db, 'articles'));
       unsubscribeArticles = onSnapshot(
         q,
         (snapshot) => {
@@ -64,6 +63,7 @@ export const useArticlesStore = defineStore('articles', () => {
           snapshot.forEach((docSnap) => {
             list.push({ id: docSnap.id, ...(docSnap.data() as Omit<Article, 'id'>) });
           });
+          list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
           articles.value = list;
           setCachedArticles(list);
           logger.info(`Sincronizzati ${list.length} articoli con cache locale.`);
@@ -131,9 +131,12 @@ export const useArticlesStore = defineStore('articles', () => {
       const articlesRef = collection(db, 'articles');
       const docRef = await addDoc(articlesRef, article);
       const newArticle: Article = { id: docRef.id, ...article };
-      articles.value.push(newArticle);
+      articles.value = [...articles.value, newArticle].sort(
+        (a, b) => (a.order ?? 999) - (b.order ?? 999),
+      );
       setCachedArticles(articles.value);
       logger.info('Articolo aggiunto con successo');
+      return newArticle;
     } catch (e: unknown) {
       logger.error('Errore aggiunta articolo:', e);
       throw e;
@@ -146,11 +149,10 @@ export const useArticlesStore = defineStore('articles', () => {
     loading.value = true;
     try {
       // Optimistic local update
-      const index = articles.value.findIndex((a) => a.id === id);
-      if (index !== -1) {
-        articles.value[index] = { ...articles.value[index], ...updates } as Article;
-        setCachedArticles(articles.value);
-      }
+      articles.value = articles.value.map((a) =>
+        a.id === id ? ({ ...a, ...updates } as Article) : a,
+      );
+      setCachedArticles(articles.value);
 
       const docRef = doc(db, 'articles', id);
       await updateDoc(docRef, updates);

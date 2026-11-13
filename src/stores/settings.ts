@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { db } from 'src/boot/firebase';
 import {
   doc,
@@ -364,6 +364,14 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   };
 
+  // Delegated to articlesStore for backwards compatibility
+  const articles = computed({
+    get: () => articlesStore.articles,
+    set: (val: Article[]) => {
+      articlesStore.articles = val;
+    },
+  });
+
   return {
     profile,
     loading,
@@ -376,9 +384,7 @@ export const useSettingsStore = defineStore('settings', () => {
     updateQrCode,
     removeQrCode,
     // Delegated to articlesStore for backwards compatibility
-    get articles() {
-      return articlesStore.articles;
-    },
+    articles,
     subscribeToArticles: articlesStore.subscribeToArticles,
     processBannerImage: articlesStore.processBannerImage,
     addArticle: articlesStore.addArticle,

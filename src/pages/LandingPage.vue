@@ -11,6 +11,7 @@ import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useSettingsStore } from 'stores/settings';
 import { useProductsStore } from 'stores/products';
+import { useArticlesStore } from 'stores/articles';
 import { useSecureLogger } from 'src/shared/logger';
 import type { Article, CustomSectionConfig, PublicProfile } from 'stores/settings';
 import type { Product } from 'src/types/product';
@@ -36,6 +37,7 @@ const route = useRoute();
 const $q = useQuasar();
 const settingsStore = useSettingsStore();
 const productsStore = useProductsStore();
+const articlesStore = useArticlesStore();
 const logger = useSecureLogger();
 
 // Visual Builder Preview Mode detection
@@ -223,10 +225,10 @@ const handleDuplicateArticle = async (article: Article) => {
   try {
     const clone: Partial<Article> = { ...article };
     delete clone.id;
-    await settingsStore.addArticle({
+    await articlesStore.addArticle({
       ...clone,
       title: `${article.title} (Copia)`,
-      order: (settingsStore.articles || []).length,
+      order: (articlesStore.articles || []).length,
     } as Omit<Article, 'id'>);
     $q.notify({
       type: 'positive',
@@ -378,13 +380,13 @@ const handleSaveSectionSettings = async (
 };
 
 const handleReorderArticles = async (newList: Article[]) => {
-  await settingsStore.updateArticlesOrder(newList);
+  await articlesStore.updateArticlesOrder(newList);
   $q.notify({ type: 'positive', message: 'Ordine articoli aggiornato', timeout: 800 });
 };
 
 onMounted(() => {
   settingsStore.subscribeToProfile();
-  settingsStore.subscribeToArticles();
+  articlesStore.subscribeToArticles();
 });
 </script>
 
@@ -588,7 +590,7 @@ onMounted(() => {
       :section-id="activeSettingsSection"
       :custom-config="getCustomSectionConfig(activeSettingsSection)"
       :profile="settingsStore.profile"
-      :articles="settingsStore.articles"
+      :articles="articlesStore.articles"
       @save="handleSaveSectionSettings"
       @quick-add="openQuickAdd"
       @open-edit-article="openEditArticle"

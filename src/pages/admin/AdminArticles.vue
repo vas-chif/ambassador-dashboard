@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useArticlesStore } from 'stores/articles';
 import { useSettingsStore } from 'stores/settings';
 import type { Article } from 'stores/settings';
 import { useQuasar } from 'quasar';
 
 import ArticleFormDialog from 'components/admin/ArticleFormDialog.vue';
 
-const store = useSettingsStore();
+const store = useArticlesStore();
+const settingsStore = useSettingsStore();
 const $q = useQuasar();
 
 // Search & Filter State
@@ -95,12 +97,13 @@ const toggleArticleStatus = async (article: Article) => {
 };
 
 onMounted(() => {
-  store.subscribeToProfile();
+  settingsStore.subscribeToProfile();
   store.subscribeToArticles();
 });
 
 onUnmounted(() => {
   store.unsubscribeAll();
+  settingsStore.unsubscribeAll();
 });
 </script>
 

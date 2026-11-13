@@ -96,7 +96,16 @@ export const useProductsStore = defineStore('products', () => {
     loading.value = true;
     try {
       const colRef = collection(db, 'products');
-      await addDoc(colRef, product);
+      const docRef = await addDoc(colRef, product);
+      const newProd: Product = { id: docRef.id, ...(product as Omit<Product, 'id'>) };
+      products.value = [...products.value, newProd].sort(
+        (a, b) => (a.order ?? 999) - (b.order ?? 999),
+      );
+      try {
+        localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+      } catch {
+        // Ignore quota error
+      }
       logger.info('Product added', { name: product.name });
     } catch (error: unknown) {
       logger.error('Error adding product', error);
@@ -110,14 +119,13 @@ export const useProductsStore = defineStore('products', () => {
     loading.value = true;
     try {
       // Optimistic local update
-      const index = products.value.findIndex((p) => p.id === id);
-      if (index !== -1) {
-        products.value[index] = { ...products.value[index], ...updates, id } as Product;
-        try {
-          localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
-        } catch {
-          // Ignore quota error
-        }
+      products.value = products.value.map((p) =>
+        p.id === id ? ({ ...p, ...updates, id } as Product) : p,
+      );
+      try {
+        localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+      } catch {
+        // Ignore quota error
       }
 
       const docRef = doc(db, 'products', id);

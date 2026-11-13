@@ -313,5 +313,19 @@
   - Il nuovo prodotto duplicato nasce come template/base pulita senza ereditare recensioni, cuoricini o preferiti del prodotto originale.
 
 ---
+
+### ⚡ FASE 18: Risoluzione Reattività Istantanea Store & LocalStorage (Articoli & Prodotti)
+- [x] **18.1 Eliminazione Plain Getter e Ripristino Computed Bidirezionale ([settings.ts](file:///home/chif-vas/projects/beauty-ambassador/src/stores/settings.ts))**:
+  - Sostituito il getter JavaScript statico `get articles()` con una `computed({ get, set })` reattiva nativa per ripristinare il tracciamento reattivo di Vue 3.
+- [x] **18.2 Connessione Diretta Componenti ad `useArticlesStore`**:
+  - [AdminArticles.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminArticles.vue), [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue), [ArticleFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ArticleFormDialog.vue) e [LandingPage.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/LandingPage.vue) collegati direttamente a `useArticlesStore`.
+  - Risolto il problema per cui duplicare o cancellare un articolo richiedeva il ricaricamento manuale della pagina (F5).
+- [x] **18.3 Rimozione Vincolo Firestore `orderBy` & Ordinamento In-Memory Sicuro ([articles.ts](file:///home/chif-vas/projects/beauty-ambassador/src/stores/articles.ts))**:
+  - Rimosso `orderBy` dalla query Firestore (che scartava gli articoli privi di campo order) a favore dell'ordinamento in-memory `(a.order ?? 999) - (b.order ?? 999)`.
+  - Aggiornamento ottimistico a 0ms e salvataggio immutabile in cache `localStorage` su aggiunta, duplicazione, modifica e cancellazione.
+- [x] **18.4 Aggiornamento Ottimistico Prodotti ([products.ts](file:///home/chif-vas/projects/beauty-ambassador/src/stores/products.ts))**:
+  - Aggiunto aggiornamento reattivo immediato a 0ms e sincronizzazione in `localStorage` anche per `addProduct` (duplicazione prodotti).
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 

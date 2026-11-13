@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useSettingsStore } from 'stores/settings';
+import { useArticlesStore } from 'stores/articles';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 
@@ -22,7 +22,7 @@ const emit = defineEmits<{
   (e: 'duplicate-article', article: Article): void;
 }>();
 
-const store = useSettingsStore();
+const store = useArticlesStore();
 const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();

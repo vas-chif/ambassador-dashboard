@@ -8,7 +8,7 @@
 
 import { ref, watch, computed } from 'vue';
 import { useQuasar } from 'quasar';
-import { useSettingsStore } from 'stores/settings';
+import { useArticlesStore } from 'stores/articles';
 import type { Article, ArticleLayoutConfig } from 'stores/settings';
 import { useSecureLogger } from 'src/shared/logger';
 
@@ -23,7 +23,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
-const store = useSettingsStore();
+const store = useArticlesStore();
 const logger = useSecureLogger();
 
 const isEditing = computed(() => !!props.initialData?.id);
