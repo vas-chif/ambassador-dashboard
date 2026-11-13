@@ -29,6 +29,24 @@ Non procedere mai ad applicare modifiche senza aver prima scritto questo blocco 
 
 ---
 
+## 🧩 §0.2 — REGOLA ASSOLUTA: Modularità, Riuso Componenti & DRY (Don't Repeat Yourself)
+
+- **Analisi Preventiva del Codice Esistente**: Prima di scrivere nuovo codice o modificare viste/pagine, l'Agent DEVE sempre esplorare l'albero dei componenti (`src/components/`, `src/layouts/`, `src/stores/`, `src/composables/`) per verificare se esistono già componenti pronti o pattern analoghi da riutilizzare o estendere.
+- **Generazione di Componenti Replicabili**: Se non esiste un componente adatto, l'Agent NON deve scrivere decine o centinaia di righe monolitiche direttamente nella pagina genitore, ma DEVE **estrarre e creare un nuovo componente riutilizzabile e modulare** (es. in `src/components/widgets/`, `src/components/admin/`, o `src/components/common/`).
+- **Prevenzione del Debito Tecnico**: Evitare assolutamente copy-paste di markup, stili duplicati e logiche ripetute, per minimizzare l'onere di manutenzione e facilitare l'estensione futura della piattaforma.
+
+---
+
+## 📏 §0.3 — REGOLA ASSOLUTA: Limite Dimensioni File & Manutenibilità (Anti-Monolite)
+
+- **Soglie Massime di Righe per File**:
+  - **Componenti UI / Widget / Dialog (`src/components/`)**: Massimo consigliato **250 – 350 righe**. Se un componente supera questa soglia, DEVE essere decomposto in sub-componenti dedicati (es. separando il form, la toolbar, l'anteprima o le tab).
+  - **Pagine & Viste Orchestratrici (`src/pages/`)**: Massimo **400 – 500 righe**. Le pagine devono fungere solo da orchestratori puliti che compongono widget e componenti specializzati, non contenere centinaia di righe di modali inline, form o stili mastodontici.
+  - **Store Pinia / Moduli di Logica (`src/stores/`, `src/composables/`)**: Massimo **300 – 400 righe**. Decomporre in moduli o composable specializzati qualora la logica cresca eccessivamente.
+- **Obbligo di Refactoring su File Eccedenti**: Quando l'Agent interviene su un file che supera tali soglie o nota una crescita sproporzionata durante l'implementazione, DEVE proporre o applicare lo scorporo logico in componenti dedicati e incapsulati.
+
+---
+
 ## 📌 §1 — Git & Branch Management (Solo 2 Branch: dev & main)
 
 - **Regola dei 2 Branch & Mappatura Ambienti**: Sono ammessi ESCLUSIVAMENTE **due branch permanenti**:
