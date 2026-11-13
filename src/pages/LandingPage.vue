@@ -55,6 +55,9 @@ const selectedProduct = ref<Product | null>(null);
 const activeSettingsSection = ref<string>('');
 const targetAddIndex = ref<number | null>(null);
 
+const currentProfile = computed(() => settingsStore.profile);
+const currentArticles = computed(() => articlesStore.articles);
+
 // Profile Typography & Style Helpers
 const getProfileTitleClass = (secId: string): string => {
   const cfg = getCustomSectionConfig(secId);
@@ -85,6 +88,16 @@ const getProfileMaxWidthStyle = (secId: string) => {
 
 const getCustomSectionConfig = (sectionId: string): CustomSectionConfig => {
   return settingsStore.profile.customSections?.[sectionId] || {};
+};
+
+const getTiktokUrl = (tiktok?: string): string => {
+  if (!tiktok) return '#';
+  return tiktok.startsWith('http') ? tiktok : `https://tiktok.com/@${tiktok}`;
+};
+
+const getInstagramUrl = (instagram?: string): string => {
+  if (!instagram) return '#';
+  return instagram.startsWith('http') ? instagram : `https://instagram.com/${instagram}`;
 };
 
 const getSectionType = (secId: string): 'profile' | 'articles' | 'actionBanner' | 'products' => {
@@ -464,63 +477,64 @@ onMounted(() => {
             </p>
 
             <!-- Social Media & Contact Links -->
-            <template v-if="getCustomSectionConfig(section).showSocials !== false">
-              <div class="row justify-center q-gutter-md q-mb-md">
-                <q-btn
-                  v-if="settingsStore.profile.whatsapp"
-                  round
-                  outline
-                  color="primary"
-                  icon="fa-brands fa-whatsapp"
-                  type="a"
-                  :href="`https://wa.me/${settingsStore.profile.whatsapp}`"
-                  target="_blank"
-                >
-                  <q-tooltip>WhatsApp</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="settingsStore.profile.tiktok"
-                  round
-                  outline
-                  color="primary"
-                  icon="fa-brands fa-tiktok"
-                  type="a"
-                  :href="settingsStore.profile.tiktok.startsWith('http') ? settingsStore.profile.tiktok : `https://tiktok.com/@${settingsStore.profile.tiktok}`"
-                  target="_blank"
-                >
-                  <q-tooltip>TikTok</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="settingsStore.profile.instagram"
-                  round
-                  outline
-                  color="primary"
-                  icon="fa-brands fa-instagram"
-                  type="a"
-                  :href="settingsStore.profile.instagram.startsWith('http') ? settingsStore.profile.instagram : `https://instagram.com/${settingsStore.profile.instagram}`"
-                  target="_blank"
-                >
-                  <q-tooltip>Instagram</q-tooltip>
-                </q-btn>
-                <q-btn
-                  v-if="settingsStore.profile.email"
-                  round
-                  outline
-                  color="primary"
-                  icon="email"
-                  type="a"
-                  :href="`mailto:${settingsStore.profile.email}`"
-                >
-                  <q-tooltip>Send Email</q-tooltip>
-                </q-btn>
-              </div>
-            </template>
+            <div
+              v-if="getCustomSectionConfig(section).showSocials !== false"
+              class="row justify-center q-gutter-md q-mb-md"
+            >
+              <q-btn
+                v-if="settingsStore.profile.whatsapp"
+                round
+                outline
+                color="primary"
+                icon="fa-brands fa-whatsapp"
+                type="a"
+                :href="`https://wa.me/${settingsStore.profile.whatsapp}`"
+                target="_blank"
+              >
+                <q-tooltip>WhatsApp</q-tooltip>
+              </q-btn>
+              <q-btn
+                v-if="settingsStore.profile.tiktok"
+                round
+                outline
+                color="primary"
+                icon="fa-brands fa-tiktok"
+                type="a"
+                :href="getTiktokUrl(settingsStore.profile.tiktok)"
+                target="_blank"
+              >
+                <q-tooltip>TikTok</q-tooltip>
+              </q-btn>
+              <q-btn
+                v-if="settingsStore.profile.instagram"
+                round
+                outline
+                color="primary"
+                icon="fa-brands fa-instagram"
+                type="a"
+                :href="getInstagramUrl(settingsStore.profile.instagram)"
+                target="_blank"
+              >
+                <q-tooltip>Instagram</q-tooltip>
+              </q-btn>
+              <q-btn
+                v-if="settingsStore.profile.email"
+                round
+                outline
+                color="primary"
+                icon="email"
+                type="a"
+                :href="`mailto:${settingsStore.profile.email}`"
+              >
+                <q-tooltip>Send Email</q-tooltip>
+              </q-btn>
+            </div>
           </div>
         </div>
 
         <!-- 2. Dynamic Article Carousel Section -->
         <div
-          v-else-if="getSectionType(section) === 'articles'"
+          v-if="getSectionType(section) === 'articles'"
           class="q-mb-xl full-width"
         >
           <ArticleCarousel
@@ -533,15 +547,15 @@ onMounted(() => {
 
         <!-- 3. Action Pill Banner Section (Modular Widget) -->
         <ActionPillBanner
-          v-else-if="getSectionType(section) === 'actionBanner'"
-          :banner-text="getCustomSectionConfig(section).bannerText || settingsStore.profile.actionBannerText"
-          :button-text="getCustomSectionConfig(section).bannerButtonText || settingsStore.profile.actionBannerButtonText"
+          v-if="getSectionType(section) === 'actionBanner'"
+          :banner-text="getCustomSectionConfig(section).bannerText || settingsStore.profile.actionBannerText || ''"
+          :button-text="getCustomSectionConfig(section).bannerButtonText || settingsStore.profile.actionBannerButtonText || ''"
           :target-url="getCustomSectionConfig(section).bannerUrl || bannerTargetUrl"
         />
 
         <!-- 4. Product Grid Section -->
         <div
-          v-else-if="getSectionType(section) === 'products'"
+          v-if="getSectionType(section) === 'products'"
           class="max-width-container q-px-md q-pb-xl"
         >
           <div class="text-center q-mb-lg">
@@ -589,8 +603,8 @@ onMounted(() => {
       v-model="showSettingsDialog"
       :section-id="activeSettingsSection"
       :custom-config="getCustomSectionConfig(activeSettingsSection)"
-      :profile="settingsStore.profile"
-      :articles="articlesStore.articles"
+      :profile="currentProfile"
+      :articles="currentArticles"
       @save="handleSaveSectionSettings"
       @quick-add="openQuickAdd"
       @open-edit-article="openEditArticle"
