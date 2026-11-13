@@ -11,6 +11,7 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["vite/client"],
     "strict": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -39,6 +40,7 @@
     "src/**/*.vue"
   ],
   "exclude": [
+    ".quasar",
     "dist",
     "node_modules"
   ]

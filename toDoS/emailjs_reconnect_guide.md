@@ -54,3 +54,4 @@ Segui questi passaggi per ripristinare immediatamente l'invio delle email:
 Se usi Gmail gratuito, Google impone policy rigide sui token OAuth. Per avere un'infrastruttura di invio email che non scade mai nel tempo, puoi considerare in futuro:
 1. **Password per le App (App Password)** con connessione SMTP standard su EmailJS invece di Google OAuth.
 2. Oppure un provider transazionale dedicato gratuito (come **Resend**, **Brevo / Sendinblue** o **SendGrid**) collegato a EmailJS, che utilizza chiavi API permanenti che non scadono mai.
+

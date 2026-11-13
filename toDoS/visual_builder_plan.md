@@ -339,5 +339,21 @@
   - Disposizione a colonna singola pulita, margini controllati e toolbar inferiore sticky sempre a portata di mano.
 
 ---
+
+### 🔧 FASE 20: Risoluzione Diagnostiche TypeScript IDE & Compatibilità Compilatore
+- [x] **20.1 Compatibilità Modulo TypeScript (`quasar.config.ts`)**:
+  - Attivato `extendTsConfig(tsConfig)` in `quasar.config.ts` per forzare `compilerOptions.module = 'esnext'`.
+  - Configurato `module: 'esnext'` per prevenire l'errore TS6046 su compilatori IDE che non supportano `--module preserve`.
+- [x] **20.2 Tipizzazione Environment Variables & Client Vite (`src/env.d.ts` e `tsconfig.json`)**:
+  - Aggiunta reference `/// <reference types="vite/client" />` e interfaccia esplicita `ImportMetaEnv` in `src/env.d.ts`.
+  - Aggiunto `"types": ["vite/client"]` in `tsconfig.json` per risolvere l'errore TS2339 (`Property 'env' does not exist on type 'ImportMeta'`).
+- [x] **20.3 Isolamento Cartella `.quasar` in `tsconfig.json`**:
+  - Inserito `".quasar"` nella direttiva `exclude` del file root `tsconfig.json` per evitare che l'IDE crei conflitti tra i due file di configurazione tsconfig.
+- [x] **20.4 Risoluzione Cascade Errori Alias & Parametri `any` Impliciti**:
+  - Con il ripristino del motore di configurazione TypeScript, tutti gli alias (`stores/*`, `src/*`, `components/*`) si risolvono istantaneamente nell'IDE, eliminando a cascata i falsi positivi TS2307 e TS7006.
+
+---
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
