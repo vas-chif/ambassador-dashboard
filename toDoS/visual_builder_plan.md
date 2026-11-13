@@ -327,5 +327,17 @@
   - Aggiunto aggiornamento reattivo immediato a 0ms e sincronizzazione in `localStorage` anche per `addProduct` (duplicazione prodotti).
 
 ---
+
+### 💎 FASE 19: Scheda Dettaglio Prodotto Luxury & Responsive Multi-Display
+- [x] **19.1 Distacco dal Header e Spaziatura di Respiro ([ProductDetailDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ProductDetailDialog.vue))**:
+  - Inserito padding reattivo e distanziamento tra la toolbar superiore e la card prodotto, evitando che l'immagine tocchi o scivoli sotto il header.
+- [x] **19.2 Layout 2-Colonne Centrato su Desktop & Widescreen**:
+  - Contenitore centrato con larghezza massima di `1040px`, bordi arrotondati (`border-radius: 16px`) ed elevazione luxury (`shadow-2`).
+  - Colonna sinistra (`col-12 col-md-6`): Vetrina immagine con sfondo warm luxury `#faf8f5`, contenimento ottimale e selettore galleria miniature interattivo.
+  - Colonna destra (`col-12 col-md-6`): Tipografia editoriale con font serif `Playfair Display`, categoria, prezzo, stelline di gradimento, descrizione, istruzioni e bottone acquisto rapido.
+- [x] **19.3 Adattamento Fluido Mobile (< 600px)**:
+  - Disposizione a colonna singola pulita, margini controllati e toolbar inferiore sticky sempre a portata di mano.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
