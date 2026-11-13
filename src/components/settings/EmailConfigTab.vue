@@ -60,3 +60,4 @@ const store = useSettingsStore();
     />
   </div>
 </template>
+

@@ -171,3 +171,4 @@ const quickAddLabel = computed(() => props.sectionType === 'articles' ? '+ Aggiu
   }
 }
 </style>
+

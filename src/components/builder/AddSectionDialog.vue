@@ -140,3 +140,4 @@ const selectType = (type: 'profile' | 'articles' | 'products' | 'actionBanner') 
   box-shadow: 0 4px 12px rgba(52, 20, 20, 0.1);
 }
 </style>
+

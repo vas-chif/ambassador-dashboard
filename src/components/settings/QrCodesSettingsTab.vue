@@ -208,3 +208,4 @@ const downloadQr = async (qr: QrCode) => {
     </q-dialog>
   </div>
 </template>
+

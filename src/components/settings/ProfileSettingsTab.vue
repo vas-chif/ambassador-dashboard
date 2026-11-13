@@ -187,3 +187,4 @@ const onFileSelected = async (file: File | null) => {
     </div>
   </div>
 </template>
+

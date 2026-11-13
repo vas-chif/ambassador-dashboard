@@ -132,8 +132,28 @@ const getTextAlignClass = (article: Article) => {
       </q-carousel>
     </div>
 
-    <!-- 2. SYNCHRONIZED STORY & ACTION PANEL (Directly Underneath the Carousel) -->
-    <div v-if="currentArticle" class="carousel-story-container q-px-md q-pt-lg q-pb-md">
+    <!-- 2. INTERACTIVE THUMBNAILS GALLERY STRIP (Directly Underneath Main Image) -->
+    <div
+      v-if="articles.length > 1"
+      class="thumbnails-gallery-strip row justify-center items-center q-gutter-sm q-pt-md q-pb-sm"
+    >
+      <div
+        v-for="art in articles"
+        :key="art.id"
+        class="thumbnail-card cursor-pointer transition-easy"
+        :class="{ 'thumbnail-active': slide === art.slideIndex }"
+        @click="slide = art.slideIndex"
+      >
+        <q-img
+          :src="art.imageUrl"
+          class="rounded-borders thumbnail-img"
+          fit="cover"
+        />
+      </div>
+    </div>
+
+    <!-- 3. SYNCHRONIZED STORY & ACTION PANEL (Directly Underneath Thumbnails) -->
+    <div v-if="currentArticle" class="carousel-story-container q-px-md q-pt-md q-pb-md">
       <transition name="fade" mode="out-in">
         <div :key="currentArticle.id" class="column items-center text-center">
           <!-- Article Title -->
@@ -166,23 +186,6 @@ const getTextAlignClass = (article: Article) => {
           </div>
         </div>
       </transition>
-
-      <!-- 3. INTERACTIVE THUMBNAILS GALLERY STRIP -->
-      <div v-if="articles.length > 1" class="thumbnails-gallery-strip row justify-center items-center q-gutter-sm q-mt-md">
-        <div
-          v-for="art in articles"
-          :key="art.id"
-          class="thumbnail-card cursor-pointer transition-easy"
-          :class="{ 'thumbnail-active': slide === art.slideIndex }"
-          @click="slide = art.slideIndex"
-        >
-          <q-img
-            :src="art.imageUrl"
-            class="rounded-borders thumbnail-img"
-            fit="cover"
-          />
-        </div>
-      </div>
     </div>
   </div>
 </template>
