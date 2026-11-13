@@ -154,6 +154,35 @@
 
 ---
 
+### 🌟 FASE 10: Carosello Editoriale Full-Width & Scheda Narrativa Sincronizzata Sotto
+- [x] **10.1 Refactoring Architettura Visiva Carosello ([ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue))**:
+  - [x] **Carosello Immagini Top Edge-to-Edge**: Espansione del carosello immagini a larghezza piena (Full-Width / 100% ampiezza schermo) senza margini angusti né box testuali sovrapposti a coprire volti e flaconi.
+  - [x] **Immagini 100% Visibili & Pulite**: Foto prima/dopo e prodotti presentate a pieno campo con aspect ratio cinematografico bilanciato (altezza desktop ~420-580px, mobile ~280-360px) e contenimento ottimale (`contain`/`cover` intelligente con sfondo warm luxury `#f7f5f0`).
+  - [x] **Navigazione Fluida & Autoplay**: Transizioni animate pulite, swipe touch mobile, frecce laterali discrete e autoplay sincronizzato.
+- [x] **10.2 Scheda Narrativa Dinamica Sincronizzata Sotto al Carosello**:
+  - [x] Blocco editoriale sottostante dedicato che mostra in tempo reale:
+    - **Titolo dell'Articolo / Trattamento** (tipografia serif di prestigio `Playfair Display`).
+    - **Descrizione Completa & Storia** (leggibile, senza clamping aggressivi che tagliano il testo).
+    - **Pulsante CTA d'Azione WhatsApp / Scopri di Più** ben visibile e centrato.
+    - **Miniature Galleria di Navigazione** posizionate in calce per navigare istantaneamente tra le storie con indicatore attivo evidenziato.
+  - [x] **Sincronizzazione Reattiva Istantanea**: Quando la slide cambia (autoplay o interazione utente), il testo sottostante si aggiorna all'istante con transizione fluida (*smooth fade*).
+- [x] **10.3 Adattabilità Universale Desktop & Mobile**:
+  - [x] Layout identico, armonioso e privo di frammentazione tra smartphone, tablet e monitor widescreen.
+
+---
+
+### 🚀 FASE 11: Pipeline CI/CD GitHub Actions & Deploy Multi-Environment
+- [x] **11.1 Aggiornamento Workflow Staging (`dev` -> `staging-glowandcarespace`)**:
+  - [x] Configurazione setup Node.js v22 con cache Yarn per garantire compatibilità con Vite 7 in [firebase-hosting-dev.yml](file:///home/chif-vas/projects/beauty-ambassador/.github/workflows/firebase-hosting-dev.yml).
+  - [x] Build e deploy automatico su `staging-glowandcarespace.web.app` al push su branch `dev`.
+- [x] **11.2 Aggiornamento Workflow Production (`main` -> `glowandcarespace-maria`)**:
+  - [x] Configurazione setup Node.js v22 con cache Yarn in [firebase-hosting-merge.yml](file:///home/chif-vas/projects/beauty-ambassador/.github/workflows/firebase-hosting-merge.yml).
+  - [x] Build e deploy automatico su `glowandcarespace-maria.web.app` al merge/push su branch `main`.
+- [x] **11.3 Push Diretto su Branch `dev`**:
+  - [x] Esecuzione controllata del push su `origin dev` per attivare la pipeline di staging.
+
+---
+
 ### 🛡️ FASE 5: Sicurezza, Caching Locale & Performance (*Cybersecurity & Architect*)
 - [x] **5.1 Caching Locale Obbligatorio (Pattern Stale-While-Revalidate)**:
   - [x] Salvataggio immediato in `localStorage` delle preferenze di disposizione e visibilità per azzerare tempi di caricamento (0ms).

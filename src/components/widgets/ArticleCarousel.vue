@@ -40,7 +40,12 @@ const articles = computed(() => {
     .map((a: Article, index: number) => ({ ...a, slideIndex: index + 1 })); // Slide names must be unique
 });
 
-const openLink = (url: string) => {
+const currentArticle = computed(() => {
+  if (articles.value.length === 0) return null;
+  return articles.value.find((a) => a.slideIndex === slide.value) || articles.value[0];
+});
+
+const openLink = (url?: string) => {
   if (!url) return;
   if (url.startsWith('http')) {
     window.open(url, '_blank');
@@ -49,65 +54,12 @@ const openLink = (url: string) => {
   }
 };
 
-const getDisplayMode = (article: Article): 'below' | 'split-right' | 'split-left' | 'overlay' => {
-  return article.layoutConfig?.displayMode || 'below';
-};
-
-const currentArticle = computed(() => {
-  return articles.value.find((a) => a.slideIndex === slide.value) || articles.value[0];
-});
-
-const desktopCarouselHeight = computed(() => {
-  if (!currentArticle.value) return '660px';
-  const mode = getDisplayMode(currentArticle.value);
-  if (mode === 'below') {
-    return 'clamp(640px, 80vh, 850px)';
+const carouselHeight = computed(() => {
+  if ($q.screen.lt.md) {
+    return 'clamp(280px, 42vh, 360px)';
   }
-  if (mode === 'overlay') {
-    return 'clamp(520px, 70vh, 720px)';
-  }
-  return 'clamp(520px, 68vh, 700px)';
+  return 'clamp(420px, 54vh, 580px)';
 });
-
-const getQuadrantPlacementClass = (article: Article) => {
-  const v = article.layoutConfig?.verticalAlign || 'middle';
-  const h = article.layoutConfig?.horizontalAlign || 'center';
-  const vClass = v === 'top' ? 'items-start' : v === 'bottom' ? 'items-end overlay-bottom-spacing' : 'items-center';
-  const hClass = h === 'left' ? 'justify-start' : h === 'right' ? 'justify-end' : 'justify-center';
-  return `${vClass} ${hClass} q-pa-lg`;
-};
-
-const getOverlayWidthClass = (article: Article) => {
-  const w = article.layoutConfig?.boxWidth || 'md';
-  if (w === 'sm') return 'overlay-width-sm';
-  if (w === 'lg') return 'overlay-width-lg';
-  if (w === 'full') return 'full-width';
-  return 'overlay-width-md';
-};
-
-const getContentColClass = (article: Article) => {
-  const width = article.layoutConfig?.boxWidth;
-  if (width === 'sm') return 'col-md-5';
-  if (width === 'lg') return 'col-md-9';
-  if (width === 'full') return 'col-md-10';
-  return 'col-md-7';
-};
-
-const getImageColClass = (article: Article) => {
-  const width = article.layoutConfig?.boxWidth;
-  if (width === 'sm') return 'col-md-7';
-  if (width === 'lg') return 'col-md-3';
-  if (width === 'full') return 'col-md-2';
-  return 'col-md-5';
-};
-
-const getJustifyClass = (article: Article) => {
-  const vAlign = article.layoutConfig?.verticalAlign;
-  if (vAlign === 'top') return 'justify-start q-gutter-y-md';
-  if (vAlign === 'middle') return 'justify-center q-gutter-y-md';
-  if (vAlign === 'bottom') return 'justify-end q-gutter-y-md';
-  return 'justify-between';
-};
 
 const getTextAlignClass = (article: Article) => {
   const tAlign = article.layoutConfig?.textAlign;
@@ -118,423 +70,234 @@ const getTextAlignClass = (article: Article) => {
 </script>
 
 <template>
-  <div v-if="articles.length > 0" class="full-width q-mb-xl">
-    <q-separator class="q-mb-lg" />
+  <div v-if="articles.length > 0" class="article-showcase-section full-width q-mb-xl">
+    <!-- 1. FULL-WIDTH TOP IMAGE CAROUSEL (Edge-to-Edge Showcase) -->
+    <div class="carousel-full-width-wrapper relative-position full-width overflow-hidden">
+      <!-- In-Place Quick Edit Current Article (Preview Mode Only) -->
+      <div
+        v-if="isPreview && currentArticle"
+        class="carousel-quick-edit-action absolute-top-right q-ma-md"
+        style="z-index: 30"
+      >
+        <q-btn
+          unelevated
+          color="primary"
+          text-color="white"
+          icon="edit"
+          label="Modifica Articolo"
+          class="shadow-4 text-caption text-weight-bold q-px-sm"
+          size="sm"
+          no-caps
+          @click.stop="emit('edit-article', currentArticle)"
+        >
+          <q-tooltip>Modifica foto, testi o link dell'articolo visibile</q-tooltip>
+        </q-btn>
+      </div>
 
-    <div class="row justify-center">
-      <div class="col-12 q-px-sm max-width-carousel relative-position">
-        <!-- In-Place Quick Edit Current Article (Preview Mode Only) -->
-        <div v-if="isPreview && currentArticle" class="carousel-quick-edit-action absolute-top-right q-ma-sm" style="z-index: 25">
-          <q-btn
-            unelevated
-            color="primary"
-            text-color="white"
-            icon="edit"
-            label="Modifica Articolo"
-            class="shadow-4 text-caption text-weight-bold q-px-sm"
-            size="sm"
-            no-caps
-            @click.stop="emit('edit-article', currentArticle)"
+      <q-carousel
+        v-model="slide"
+        swipeable
+        animated
+        infinite
+        :autoplay="9000"
+        :height="carouselHeight"
+        class="bg-warm-luxury full-width"
+        arrows
+        control-color="primary"
+        transition-prev="slide-right"
+        transition-next="slide-left"
+      >
+        <q-carousel-slide
+          v-for="article in articles"
+          :key="article.id"
+          :name="article.slideIndex"
+          class="q-pa-none flex flex-center full-height full-width overflow-hidden bg-warm-luxury"
+        >
+          <div class="carousel-image-frame full-width full-height relative-position flex flex-center">
+            <q-img
+              :src="article.imageUrl"
+              class="full-width full-height"
+              fit="contain"
+              position="center"
+              loading="lazy"
+            >
+              <template #error>
+                <div class="absolute-full flex flex-center bg-grey-2 text-grey-6">
+                  <q-icon name="image_not_supported" size="48px" />
+                </div>
+              </template>
+            </q-img>
+          </div>
+        </q-carousel-slide>
+      </q-carousel>
+    </div>
+
+    <!-- 2. SYNCHRONIZED STORY & ACTION PANEL (Directly Underneath the Carousel) -->
+    <div v-if="currentArticle" class="carousel-story-container q-px-md q-pt-lg q-pb-md">
+      <transition name="fade" mode="out-in">
+        <div :key="currentArticle.id" class="column items-center text-center">
+          <!-- Article Title -->
+          <h3
+            :class="`text-h4 text-primary font-serif text-weight-bold q-mb-sm carousel-story-title ${getTextAlignClass(currentArticle)}`"
           >
-            <q-tooltip>Modifica layout, testi e foto dell'articolo visibile</q-tooltip>
-          </q-btn>
+            {{ currentArticle.title }}
+          </h3>
+
+          <!-- Article Full Description (Unclamped, elegant spacing) -->
+          <div
+            :class="`text-body1 text-grey-8 text-weight-light carousel-story-description q-mb-md ${getTextAlignClass(currentArticle)}`"
+          >
+            {{ currentArticle.description }}
+          </div>
+
+          <!-- Action CTA Button -->
+          <div class="row justify-center q-my-sm">
+            <q-btn
+              color="primary"
+              text-color="white"
+              :label="currentArticle.actionText || 'Scopri di più'"
+              icon-right="arrow_forward"
+              unelevated
+              rounded
+              class="carousel-story-btn text-weight-medium q-px-xl q-py-xs shadow-3"
+              size="md"
+              @click="openLink(currentArticle.linkUrl)"
+            />
+          </div>
         </div>
+      </transition>
 
-        <!-- MOBILE: Vertical Full-Card Carousel -->
-        <q-carousel
-          v-if="$q.screen.lt.md"
-          v-model="slide"
-          swipeable
-          animated
-          infinite
-          :autoplay="10000"
-          height="600px"
-          class="bg-white shadow-2 rounded-borders overflow-hidden mobile-carousel"
-          control-color="primary"
-          arrows
-          navigation
+      <!-- 3. INTERACTIVE THUMBNAILS GALLERY STRIP -->
+      <div v-if="articles.length > 1" class="thumbnails-gallery-strip row justify-center items-center q-gutter-sm q-mt-md">
+        <div
+          v-for="art in articles"
+          :key="art.id"
+          class="thumbnail-card cursor-pointer transition-easy"
+          :class="{ 'thumbnail-active': slide === art.slideIndex }"
+          @click="slide = art.slideIndex"
         >
-          <q-carousel-slide
-            v-for="article in articles"
-            :key="article.id"
-            :name="article.slideIndex"
-            class="q-pa-none"
-          >
-            <div class="column full-height">
-              <!-- Top: Image (44%) - 100% visible before/after photo -->
-              <div class="mobile-carousel-image bg-white">
-                <q-img
-                  :src="article.imageUrl"
-                  class="full-width full-height"
-                  fit="contain"
-                  position="center"
-                />
-              </div>
-
-              <!-- Bottom: Content (56%) -->
-              <div class="mobile-carousel-content column q-px-lg q-py-md bg-white">
-                <!-- Title -->
-                <div
-                  :class="`text-h6 text-weight-bold text-primary font-serif q-mb-sm ${getTextAlignClass(article)}`"
-                >
-                  {{ article.title }}
-                </div>
-
-                <!-- Description -->
-                <div
-                  :class="`text-body2 text-grey-8 q-mb-md mobile-description-clamp ${getTextAlignClass(article)}`"
-                  style="line-height: 1.4"
-                >
-                  {{ article.description }}
-                </div>
-
-                <!-- Button (Fixed at Bottom) -->
-                <div
-                  :class="`row q-mt-auto ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`"
-                >
-                  <q-btn
-                    color="primary"
-                    text-color="white"
-                    :label="article.actionText || 'Scopri di più'"
-                    icon-right="arrow_forward"
-                    unelevated
-                    size="md"
-                    class="q-px-lg"
-                    @click="openLink(article.linkUrl)"
-                  />
-                </div>
-              </div>
-            </div>
-          </q-carousel-slide>
-        </q-carousel>
-
-        <!-- DESKTOP: Multi-Mode Carousel -->
-        <q-carousel
-          v-else
-          v-model="slide"
-          swipeable
-          animated
-          thumbnails
-          infinite
-          :autoplay="10000"
-          :height="desktopCarouselHeight"
-          class="bg-white shadow-2 rounded-borders overflow-hidden transition-height"
-          padding
-          arrows
-          control-color="primary"
-        >
-          <q-carousel-slide
-            v-for="article in articles"
-            :key="article.id"
-            :name="article.slideIndex"
-            class="q-pa-none"
-            :img-src="article.imageUrl"
-            :class="{ 'slide-clean-bg': getDisplayMode(article) !== 'overlay' }"
-          >
-            <!-- 1. MODE 'below': Stacked with 100% visible image on top, text below (like mobile) -->
-            <div
-              v-if="getDisplayMode(article) === 'below'"
-              class="column full-height bg-white overflow-hidden"
-            >
-              <!-- Top: Image (52% height, clean, 100% visible before/after photo) -->
-              <div class="desktop-below-image-container relative-position bg-white" style="height: 52%; flex-shrink: 0">
-                <q-img
-                  :src="article.imageUrl"
-                  class="full-width full-height"
-                  fit="contain"
-                  position="center"
-                />
-              </div>
-
-              <!-- Bottom: Content (48% height with clearance for thumbnails) -->
-              <div class="column flex-1 q-px-xl q-py-md bg-white justify-between carousel-below-content">
-                <div>
-                  <div
-                    :class="`carousel-title text-weight-bold text-primary font-serif q-mb-xs ${getTextAlignClass(article)}`"
-                  >
-                    {{ article.title }}
-                  </div>
-                  <div
-                    :class="`carousel-description text-grey-8 text-weight-light ${getTextAlignClass(article)}`"
-                    style="line-height: 1.45"
-                  >
-                    {{ article.description }}
-                  </div>
-                </div>
-
-                <div
-                  :class="`row q-mt-md ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`"
-                >
-                  <q-btn
-                    color="primary"
-                    text-color="white"
-                    :label="article.actionText || 'Scopri di più'"
-                    icon-right="arrow_forward"
-                    unelevated
-                    class="carousel-button"
-                    @click="openLink(article.linkUrl)"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. MODE 'split-right': Side-by-side (Image Left, Content Right) -->
-            <div
-              v-else-if="getDisplayMode(article) === 'split-right'"
-              class="row full-height bg-white"
-            >
-              <div :class="`col-12 ${getImageColClass(article)} carousel-image-col relative-position bg-grey-1`">
-                <q-img
-                  :src="article.imageUrl"
-                  class="full-height full-width"
-                  fit="cover"
-                  position="center"
-                />
-              </div>
-              <div :class="`col-12 ${getContentColClass(article)} carousel-content-col bg-white text-black carousel-padding`">
-                <div :class="`column full-height ${getJustifyClass(article)}`">
-                  <div :class="`carousel-title text-weight-bold text-primary font-serif ${getTextAlignClass(article)}`">
-                    {{ article.title }}
-                  </div>
-                  <div :class="`carousel-description text-grey-8 text-weight-light carousel-desc-padding description-clamped ${getTextAlignClass(article)}`">
-                    {{ article.description }}
-                  </div>
-                  <div :class="`carousel-button-container carousel-button-padding row ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`">
-                    <q-btn
-                      color="primary"
-                      text-color="white"
-                      :label="article.actionText || 'Scopri di più'"
-                      icon-right="arrow_forward"
-                      unelevated
-                      class="carousel-button"
-                      @click="openLink(article.linkUrl)"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 3. MODE 'split-left': Side-by-side (Content Left, Image Right) -->
-            <div
-              v-else-if="getDisplayMode(article) === 'split-left'"
-              class="row full-height bg-white"
-            >
-              <div :class="`col-12 ${getContentColClass(article)} carousel-content-col bg-white text-black carousel-padding`">
-                <div :class="`column full-height ${getJustifyClass(article)}`">
-                  <div :class="`carousel-title text-weight-bold text-primary font-serif ${getTextAlignClass(article)}`">
-                    {{ article.title }}
-                  </div>
-                  <div :class="`carousel-description text-grey-8 text-weight-light carousel-desc-padding description-clamped ${getTextAlignClass(article)}`">
-                    {{ article.description }}
-                  </div>
-                  <div :class="`carousel-button-container carousel-button-padding row ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`">
-                    <q-btn
-                      color="primary"
-                      text-color="white"
-                      :label="article.actionText || 'Scopri di più'"
-                      icon-right="arrow_forward"
-                      unelevated
-                      class="carousel-button"
-                      @click="openLink(article.linkUrl)"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div :class="`col-12 ${getImageColClass(article)} carousel-image-col relative-position bg-grey-1`">
-                <q-img
-                  :src="article.imageUrl"
-                  class="full-height full-width"
-                  fit="cover"
-                  position="center"
-                />
-              </div>
-            </div>
-
-            <!-- 4. MODE 'overlay': Floating box positioned with 9 Quadrants -->
-            <div
-              v-else
-              class="row full-height relative-position"
-              :class="getQuadrantPlacementClass(article)"
-            >
-              <div :class="`carousel-overlay-box bg-white text-black shadow-4 rounded-borders q-pa-lg ${getOverlayWidthClass(article)}`">
-                <div :class="`carousel-title text-weight-bold text-primary font-serif q-mb-sm ${getTextAlignClass(article)}`">
-                  {{ article.title }}
-                </div>
-                <div :class="`carousel-description text-grey-8 text-weight-light q-mb-md ${getTextAlignClass(article)}`">
-                  {{ article.description }}
-                </div>
-                <div :class="`row ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`">
-                  <q-btn
-                    color="primary"
-                    text-color="white"
-                    :label="article.actionText || 'Scopri di più'"
-                    icon-right="arrow_forward"
-                    unelevated
-                    class="carousel-button"
-                    @click="openLink(article.linkUrl)"
-                  />
-                </div>
-              </div>
-            </div>
-          </q-carousel-slide>
-        </q-carousel>
+          <q-img
+            :src="art.imageUrl"
+            class="rounded-borders thumbnail-img"
+            fit="cover"
+          />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .font-serif {
   font-family: 'Playfair Display', serif;
 }
 
-/* MOBILE CAROUSEL: Vertical Full-Card Layout */
-.mobile-carousel-image {
-  height: 40%;
-  min-height: 40%;
-  flex-shrink: 0;
+/* Warm Luxury Background for Crisp Image Contrast */
+.bg-warm-luxury {
+  background: radial-gradient(circle at center, #ffffff 0%, #f7f5f0 100%) !important;
 }
 
-.carousel-button-padding {
-  padding-bottom: 3.5rem;
-}
-
-.carousel-button-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding-bottom: 2rem; /* Add padding to lift button above arrows */
-  z-index: 10;
+.carousel-full-width-wrapper {
+  width: 100vw;
   position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
-.mobile-description-clamp {
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-
-/* Mobile-first: Stack layout (for desktop carousel on mobile) */
-
-.carousel-title {
-  font-size: 1.5rem;
-  line-height: 1.2;
-}
-
-.carousel-description {
-  font-size: 0.9rem;
-}
-
-.carousel-button {
-  padding: 0.5rem 1.5rem;
-  font-size: 0.9rem;
-}
-
-.description-clamped {
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* Reduced to 2 lines on mobile */
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-height: 60px;
-}
-
-/* Desktop: Side-by-side layout */
-@media (min-width: 1024px) {
-  .carousel-image-col,
-  .carousel-content-col {
-    height: 100%;
-  }
-
-  .carousel-content-col {
-    overflow-y: visible;
-  }
-
-  .carousel-padding {
-    padding: 2rem;
-  }
-
-  .carousel-desc-padding {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
-  .carousel-button-padding {
-    padding-bottom: 3rem;
-  }
-
-  .carousel-button-container {
-    justify-content: flex-end; /* Right-align button on desktop */
-  }
-
-  .carousel-title {
-    font-size: 3rem;
-  }
-
-  .carousel-description {
-    font-size: 1.25rem;
-  }
-
-  .carousel-button {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-  }
-
-  .description-clamped {
-    -webkit-line-clamp: 5;
-    line-clamp: 5;
-    max-height: 150px;
-  }
-}
-
-.overlay-width-sm {
-  max-width: 420px;
-}
-.overlay-width-md {
-  max-width: 580px;
-}
-.overlay-width-lg {
-  max-width: 760px;
-}
-
-.carousel-overlay-box {
-  background: rgba(255, 255, 255, 0.96) !important;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.max-width-carousel {
+.carousel-image-frame {
   max-width: 1400px;
-  width: 100%;
   margin: 0 auto;
 }
 
-.slide-clean-bg {
-  background-image: none !important;
-  background-color: #ffffff !important;
+/* Story & Action Panel Underneath */
+.carousel-story-container {
+  max-width: 860px;
+  margin: 0 auto;
 }
 
-.carousel-below-content {
-  padding-bottom: 5.5rem !important;
+.carousel-story-title {
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
-.overlay-bottom-spacing {
-  padding-bottom: 5.5rem !important;
+.carousel-story-description {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  white-space: pre-line;
+  max-width: 740px;
 }
 
-.transition-height {
-  transition: height 0.3s ease;
+.carousel-story-btn {
+  letter-spacing: 0.03em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(52, 20, 20, 0.2) !important;
+  }
 }
 
-/* Adjust for carousel thumbnails */
-:deep(.q-carousel__control--thumbnails) {
-  background: white;
-  padding-bottom: 6px;
-  z-index: 15;
+/* Thumbnails Strip */
+.thumbnails-gallery-strip {
+  padding-top: 8px;
+}
+
+.thumbnail-card {
+  width: 68px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  opacity: 0.6;
+  transition: all 0.25s ease;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+
+  &.thumbnail-active {
+    opacity: 1;
+    border-color: var(--q-primary, #341414);
+    box-shadow: 0 4px 12px rgba(52, 20, 20, 0.25);
+    transform: scale(1.08);
+  }
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+}
+
+/* Smooth Fade Transition for Text Panel */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@media (max-width: 600px) {
+  .carousel-story-title {
+    font-size: 1.45rem;
+  }
+  .carousel-story-description {
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .thumbnail-card {
+    width: 52px;
+    height: 38px;
+  }
 }
 </style>
