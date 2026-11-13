@@ -10,6 +10,8 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useSettingsStore } from 'stores/settings';
+import { useProductsStore } from 'stores/products';
+import { useSecureLogger } from 'src/shared/logger';
 import type { Article, CustomSectionConfig, PublicProfile } from 'stores/settings';
 import type { Product } from 'src/types/product';
 
@@ -33,6 +35,8 @@ const BRAND_GOLD = '#D4AF37';
 const route = useRoute();
 const $q = useQuasar();
 const settingsStore = useSettingsStore();
+const productsStore = useProductsStore();
+const logger = useSecureLogger();
 
 // Visual Builder Preview Mode detection
 const isPreview = computed(() => route.query.preview_mode === 'true');
@@ -213,6 +217,40 @@ const openQuickAdd = (type: 'articles' | 'products') => {
 const openEditArticle = (article: Article) => {
   selectedArticle.value = { ...article };
   showArticleDialog.value = true;
+};
+
+const openEditProduct = (product: Product) => {
+  selectedProduct.value = { ...product };
+  showProductDialog.value = true;
+};
+
+const handleSaveProduct = async (productData: Partial<Product>) => {
+  try {
+    if (selectedProduct.value?.id) {
+      await productsStore.updateProduct(selectedProduct.value.id, productData);
+      $q.notify({
+        type: 'positive',
+        message: 'Prodotto aggiornato con successo!',
+        icon: 'check',
+        timeout: 1200,
+      });
+    } else {
+      await productsStore.addProduct(productData);
+      $q.notify({
+        type: 'positive',
+        message: 'Nuovo prodotto aggiunto con successo!',
+        icon: 'check',
+        timeout: 1200,
+      });
+    }
+    showProductDialog.value = false;
+  } catch (error: unknown) {
+    logger.error('Error saving product in preview', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Errore durante il salvataggio del prodotto',
+    });
+  }
 };
 
 const openAddSection = (index?: number) => {
@@ -486,7 +524,7 @@ onMounted(() => {
             <div class="separator-line mx-auto" :style="{ backgroundColor: BRAND_GOLD }"></div>
           </div>
 
-          <ProductGrid />
+          <ProductGrid @edit-product="openEditProduct" />
         </div>
       </div>
     </template>
@@ -507,7 +545,11 @@ onMounted(() => {
     <!-- Modals & Specialized Dialogs -->
     <ContactDialog v-model="showContactDialog" />
     <ArticleFormDialog v-model="showArticleDialog" :initial-data="selectedArticle" />
-    <ProductFormDialog v-model="showProductDialog" :initial-data="selectedProduct" />
+    <ProductFormDialog
+      v-model="showProductDialog"
+      :initial-data="selectedProduct"
+      @save="handleSaveProduct"
+    />
 
     <!-- Add Section Modal Dialog Component -->
     <AddSectionDialog

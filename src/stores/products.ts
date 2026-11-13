@@ -108,6 +108,17 @@ export const useProductsStore = defineStore('products', () => {
   const updateProduct = async (id: string, updates: Partial<Product>) => {
     loading.value = true;
     try {
+      // Optimistic local update
+      const index = products.value.findIndex((p) => p.id === id);
+      if (index !== -1) {
+        products.value[index] = { ...products.value[index], ...updates, id } as Product;
+        try {
+          localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+        } catch {
+          // Ignore quota error
+        }
+      }
+
       const docRef = doc(db, 'products', id);
       await updateDoc(docRef, updates);
       logger.info('Product updated', { id });
@@ -122,6 +133,13 @@ export const useProductsStore = defineStore('products', () => {
   const deleteProduct = async (id: string) => {
     loading.value = true;
     try {
+      products.value = products.value.filter((p) => p.id !== id);
+      try {
+        localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+      } catch {
+        // Ignore quota error
+      }
+
       const docRef = doc(db, 'products', id);
       await deleteDoc(docRef);
       logger.info('Product deleted', { id });
@@ -144,6 +162,28 @@ export const useProductsStore = defineStore('products', () => {
       throw error;
     } finally {
       loading.value = false;
+    }
+  };
+
+  const updateProductsOrder = async (orderedProducts: Product[]) => {
+    const updated = orderedProducts.map((p, idx) => ({ ...p, order: idx }));
+    products.value = updated;
+    try {
+      localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(updated));
+    } catch {
+      // Ignore quota error
+    }
+
+    try {
+      const promises = updated.map((p) => {
+        const docRef = doc(db, 'products', p.id);
+        return updateDoc(docRef, { order: p.order });
+      });
+      await Promise.all(promises);
+      logger.info('Products list order updated on Firestore');
+    } catch (error: unknown) {
+      logger.error('Error batch updating products order', error);
+      throw error;
     }
   };
 
@@ -236,6 +276,7 @@ export const useProductsStore = defineStore('products', () => {
     updateProduct,
     deleteProduct,
     updateProductOrder,
+    updateProductsOrder,
     uploadProductImage,
     rateProduct,
   };
