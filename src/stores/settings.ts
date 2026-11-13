@@ -22,6 +22,17 @@ export interface QrCode {
   createdAt: number;
 }
 
+export interface ArticleLayoutConfig {
+  articleType?: 'testimonial' | 'product';
+  displayMode?: 'below' | 'split-right' | 'split-left' | 'overlay';
+  horizontalAlign?: 'left' | 'center' | 'right';
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+  boxWidth?: 'sm' | 'md' | 'lg' | 'full';
+  textAlign?: 'left' | 'center' | 'right';
+  cardBgColor?: string;
+  cardTextColor?: string;
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -31,6 +42,7 @@ export interface Article {
   actionText: string;
   active: boolean;
   order: number;
+  layoutConfig?: ArticleLayoutConfig;
 }
 
 export interface PublicProfile {
@@ -39,7 +51,15 @@ export interface PublicProfile {
   avatarUrl: string;
   primaryColor: string;
   secondaryColor: string;
-  // Tesserino Fields
+  productsSectionTitle?: string;
+  // Dynamic Section Layout & Visibility
+  sectionsOrder?: string[];
+  hiddenSections?: string[];
+  // Action Pill Banner
+  actionBannerEnabled?: boolean;
+  actionBannerText?: string;
+  actionBannerButtonText?: string;
+  actionBannerUrl?: string;
   // Social Media
   whatsapp?: string;
   instagram?: string;
@@ -53,25 +73,59 @@ export interface PublicProfile {
   qrCodes?: QrCode[];
 }
 
-export const useSettingsStore = defineStore('settings', () => {
-  const profile = ref<PublicProfile>({
-    name: 'Maria Chifeac',
-    bio: 'Welcome to my beauty shop!',
-    avatarUrl: '',
-    primaryColor: '#341414', // Deep burgundy brown
-    secondaryColor: '#855457', // Dusty rose pink
-    whatsapp: '',
-    instagram: '',
-    email: '',
-    emailJsConfig: {
-      serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || '',
-      templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '',
-      publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '',
-    },
-    qrCodes: [],
-  });
+const CACHE_KEY_PROFILE = 'glow_public_profile';
+const CACHE_KEY_ARTICLES = 'glow_articles';
 
-  const articles = ref<Article[]>([]);
+export const useSettingsStore = defineStore('settings', () => {
+  // Stale-While-Revalidate: Load initial cached state from localStorage if available
+  const getCachedProfile = (): PublicProfile => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_PROFILE);
+      if (cached) {
+        return JSON.parse(cached) as PublicProfile;
+      }
+    } catch {
+      // Ignore localStorage parse error
+    }
+    return {
+      name: 'Maria Chifeac',
+      bio: 'Welcome to my beauty shop!',
+      avatarUrl: '',
+      primaryColor: '#341414',
+      secondaryColor: '#855457',
+      productsSectionTitle: 'I Miei Prodotti Preferiti',
+      sectionsOrder: ['profile', 'articles', 'actionBanner', 'products'],
+      hiddenSections: [],
+      actionBannerEnabled: true,
+      actionBannerText: 'Acquista qui con codice sconto la tua Skin Care e integrazione personalizzata',
+      actionBannerButtonText: 'Skin Care',
+      actionBannerUrl: '',
+      whatsapp: '',
+      instagram: '',
+      email: '',
+      emailJsConfig: {
+        serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || '',
+        templateId: import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '',
+        publicKey: import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '',
+      },
+      qrCodes: [],
+    };
+  };
+
+  const getCachedArticles = (): Article[] => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY_ARTICLES);
+      if (cached) {
+        return JSON.parse(cached) as Article[];
+      }
+    } catch {
+      // Ignore localStorage parse error
+    }
+    return [];
+  };
+
+  const profile = ref<PublicProfile>(getCachedProfile());
+  const articles = ref<Article[]>(getCachedArticles());
   const loading = ref(false);
   const logger = useSecureLogger();
 
@@ -79,6 +133,9 @@ export const useSettingsStore = defineStore('settings', () => {
     if (p.primaryColor) setCssVar('primary', p.primaryColor);
     if (p.secondaryColor) setCssVar('secondary', p.secondaryColor);
   };
+
+  // Apply cached theme immediately
+  applyTheme(profile.value);
 
   let unsubscribeProfile: (() => void) | null = null;
   let unsubscribeArticles: (() => void) | null = null;
@@ -96,6 +153,12 @@ export const useSettingsStore = defineStore('settings', () => {
           const data = docSnap.data() as PublicProfile;
           profile.value = { ...profile.value, ...data };
           applyTheme(profile.value);
+          // Update cache with fresh data (Stale-While-Revalidate)
+          try {
+            localStorage.setItem(CACHE_KEY_PROFILE, JSON.stringify(profile.value));
+          } catch {
+            // Ignore quota exceeded
+          }
           logger.info('Settings updated from realtime listener');
         }
         loading.value = false;
@@ -120,6 +183,13 @@ export const useSettingsStore = defineStore('settings', () => {
           id: d.id,
           ...(d.data() as Omit<Article, 'id'>),
         }));
+
+        // Cache articles locally
+        try {
+          localStorage.setItem(CACHE_KEY_ARTICLES, JSON.stringify(articles.value));
+        } catch {
+          // Ignore quota exceeded
+        }
 
         if (articles.value.length === 0) {
           void seedDefaultArticles();
@@ -147,9 +217,14 @@ export const useSettingsStore = defineStore('settings', () => {
     try {
       const docRef = doc(db, 'settings', 'public_profile');
       const newData = { ...profile.value, ...updates };
-      // Optimistic update
+      // Optimistic update & local cache
       profile.value = newData;
       applyTheme(newData);
+      try {
+        localStorage.setItem(CACHE_KEY_PROFILE, JSON.stringify(newData));
+      } catch {
+        // Ignore quota
+      }
 
       await setDoc(docRef, newData, { merge: true });
       logger.info('Settings saved');

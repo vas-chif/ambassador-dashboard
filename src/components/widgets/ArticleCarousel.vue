@@ -27,6 +27,73 @@ const openLink = (url: string) => {
     void router.push(url);
   }
 };
+
+const getDisplayMode = (article: Article): 'below' | 'split-right' | 'split-left' | 'overlay' => {
+  return article.layoutConfig?.displayMode || 'below';
+};
+
+const currentArticle = computed(() => {
+  return articles.value.find((a) => a.slideIndex === slide.value) || articles.value[0];
+});
+
+const desktopCarouselHeight = computed(() => {
+  if (!currentArticle.value) return '660px';
+  const mode = getDisplayMode(currentArticle.value);
+  if (mode === 'below') {
+    return 'clamp(640px, 80vh, 850px)';
+  }
+  if (mode === 'overlay') {
+    return 'clamp(520px, 70vh, 720px)';
+  }
+  return 'clamp(520px, 68vh, 700px)';
+});
+
+const getQuadrantPlacementClass = (article: Article) => {
+  const v = article.layoutConfig?.verticalAlign || 'middle';
+  const h = article.layoutConfig?.horizontalAlign || 'center';
+  const vClass = v === 'top' ? 'items-start' : v === 'bottom' ? 'items-end overlay-bottom-spacing' : 'items-center';
+  const hClass = h === 'left' ? 'justify-start' : h === 'right' ? 'justify-end' : 'justify-center';
+  return `${vClass} ${hClass} q-pa-lg`;
+};
+
+const getOverlayWidthClass = (article: Article) => {
+  const w = article.layoutConfig?.boxWidth || 'md';
+  if (w === 'sm') return 'overlay-width-sm';
+  if (w === 'lg') return 'overlay-width-lg';
+  if (w === 'full') return 'full-width';
+  return 'overlay-width-md';
+};
+
+const getContentColClass = (article: Article) => {
+  const width = article.layoutConfig?.boxWidth;
+  if (width === 'sm') return 'col-md-5';
+  if (width === 'lg') return 'col-md-9';
+  if (width === 'full') return 'col-md-10';
+  return 'col-md-7';
+};
+
+const getImageColClass = (article: Article) => {
+  const width = article.layoutConfig?.boxWidth;
+  if (width === 'sm') return 'col-md-7';
+  if (width === 'lg') return 'col-md-3';
+  if (width === 'full') return 'col-md-2';
+  return 'col-md-5';
+};
+
+const getJustifyClass = (article: Article) => {
+  const vAlign = article.layoutConfig?.verticalAlign;
+  if (vAlign === 'top') return 'justify-start q-gutter-y-md';
+  if (vAlign === 'middle') return 'justify-center q-gutter-y-md';
+  if (vAlign === 'bottom') return 'justify-end q-gutter-y-md';
+  return 'justify-between';
+};
+
+const getTextAlignClass = (article: Article) => {
+  const tAlign = article.layoutConfig?.textAlign;
+  if (tAlign === 'left') return 'text-left items-start';
+  if (tAlign === 'right') return 'text-right items-end';
+  return 'text-center items-center';
+};
 </script>
 
 <template>
@@ -34,7 +101,7 @@ const openLink = (url: string) => {
     <q-separator class="q-mb-lg" />
 
     <div class="row justify-center">
-      <div class="col-12 col-md-10 col-lg-8">
+      <div class="col-12 q-px-sm max-width-carousel">
         <!-- MOBILE: Vertical Full-Card Carousel -->
         <q-carousel
           v-if="$q.screen.lt.md"
@@ -56,33 +123,37 @@ const openLink = (url: string) => {
             class="q-pa-none"
           >
             <div class="column full-height">
-              <!-- Top: Image (40%) -->
-              <div class="mobile-carousel-image">
+              <!-- Top: Image (44%) - 100% visible before/after photo -->
+              <div class="mobile-carousel-image bg-white">
                 <q-img
                   :src="article.imageUrl"
                   class="full-width full-height"
-                  fit="cover"
+                  fit="contain"
                   position="center"
                 />
               </div>
 
-              <!-- Bottom: Content (60%) -->
-              <div class="mobile-carousel-content column q-px-xl q-py-md bg-white">
+              <!-- Bottom: Content (56%) -->
+              <div class="mobile-carousel-content column q-px-lg q-py-md bg-white">
                 <!-- Title -->
-                <div class="text-h6 text-weight-bold text-primary font-serif q-mb-sm text-center">
+                <div
+                  :class="`text-h6 text-weight-bold text-primary font-serif q-mb-sm ${getTextAlignClass(article)}`"
+                >
                   {{ article.title }}
                 </div>
 
                 <!-- Description -->
                 <div
-                  class="text-body2 text-grey-8 q-mb-md mobile-description-clamp"
+                  :class="`text-body2 text-grey-8 q-mb-md mobile-description-clamp ${getTextAlignClass(article)}`"
                   style="line-height: 1.4"
                 >
                   {{ article.description }}
                 </div>
 
                 <!-- Button (Fixed at Bottom) -->
-                <div class="row justify-center q-mt-auto">
+                <div
+                  :class="`row q-mt-auto ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`"
+                >
                   <q-btn
                     color="primary"
                     text-color="white"
@@ -99,7 +170,7 @@ const openLink = (url: string) => {
           </q-carousel-slide>
         </q-carousel>
 
-        <!-- DESKTOP: Horizontal Split Carousel -->
+        <!-- DESKTOP: Multi-Mode Carousel -->
         <q-carousel
           v-else
           v-model="slide"
@@ -108,8 +179,8 @@ const openLink = (url: string) => {
           thumbnails
           infinite
           :autoplay="10000"
-          height="500px"
-          class="bg-white shadow-2 rounded-borders overflow-hidden"
+          :height="desktopCarouselHeight"
+          class="bg-white shadow-2 rounded-borders overflow-hidden transition-height"
           padding
           arrows
           control-color="primary"
@@ -120,10 +191,61 @@ const openLink = (url: string) => {
             :name="article.slideIndex"
             class="q-pa-none"
             :img-src="article.imageUrl"
+            :class="{ 'slide-clean-bg': getDisplayMode(article) !== 'overlay' }"
           >
-            <div class="row full-height">
-              <!-- Left: Image -->
-              <div class="col-12 col-md-4 carousel-image-col relative-position">
+            <!-- 1. MODE 'below': Stacked with 100% visible image on top, text below (like mobile) -->
+            <div
+              v-if="getDisplayMode(article) === 'below'"
+              class="column full-height bg-white overflow-hidden"
+            >
+              <!-- Top: Image (52% height, clean, 100% visible before/after photo) -->
+              <div class="desktop-below-image-container relative-position bg-white" style="height: 52%; flex-shrink: 0">
+                <q-img
+                  :src="article.imageUrl"
+                  class="full-width full-height"
+                  fit="contain"
+                  position="center"
+                />
+              </div>
+
+              <!-- Bottom: Content (48% height with clearance for thumbnails) -->
+              <div class="column flex-1 q-px-xl q-py-md bg-white justify-between carousel-below-content">
+                <div>
+                  <div
+                    :class="`carousel-title text-weight-bold text-primary font-serif q-mb-xs ${getTextAlignClass(article)}`"
+                  >
+                    {{ article.title }}
+                  </div>
+                  <div
+                    :class="`carousel-description text-grey-8 text-weight-light ${getTextAlignClass(article)}`"
+                    style="line-height: 1.45"
+                  >
+                    {{ article.description }}
+                  </div>
+                </div>
+
+                <div
+                  :class="`row q-mt-md ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`"
+                >
+                  <q-btn
+                    color="primary"
+                    text-color="white"
+                    :label="article.actionText || 'Scopri di più'"
+                    icon-right="arrow_forward"
+                    unelevated
+                    class="carousel-button"
+                    @click="openLink(article.linkUrl)"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. MODE 'split-right': Side-by-side (Image Left, Content Right) -->
+            <div
+              v-else-if="getDisplayMode(article) === 'split-right'"
+              class="row full-height bg-white"
+            >
+              <div :class="`col-12 ${getImageColClass(article)} carousel-image-col relative-position bg-grey-1`">
                 <q-img
                   :src="article.imageUrl"
                   class="full-height full-width"
@@ -131,28 +253,15 @@ const openLink = (url: string) => {
                   position="center"
                 />
               </div>
-
-              <!-- Right: Content -->
-              <div
-                class="col-12 col-md-8 carousel-content-col bg-white text-black carousel-padding"
-              >
-                <div class="column full-height justify-between">
-                  <!-- Top Left: Title -->
-                  <div
-                    class="carousel-title text-weight-bold text-primary font-serif self-start text-left"
-                  >
+              <div :class="`col-12 ${getContentColClass(article)} carousel-content-col bg-white text-black carousel-padding`">
+                <div :class="`column full-height ${getJustifyClass(article)}`">
+                  <div :class="`carousel-title text-weight-bold text-primary font-serif ${getTextAlignClass(article)}`">
                     {{ article.title }}
                   </div>
-
-                  <!-- Center: Description -->
-                  <div
-                    class="carousel-description text-grey-8 text-weight-light self-center text-center carousel-desc-padding description-clamped"
-                  >
+                  <div :class="`carousel-description text-grey-8 text-weight-light carousel-desc-padding description-clamped ${getTextAlignClass(article)}`">
                     {{ article.description }}
                   </div>
-
-                  <!-- Bottom: Button -->
-                  <div class="carousel-button-container carousel-button-padding">
+                  <div :class="`carousel-button-container carousel-button-padding row ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`">
                     <q-btn
                       color="primary"
                       text-color="white"
@@ -163,6 +272,69 @@ const openLink = (url: string) => {
                       @click="openLink(article.linkUrl)"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. MODE 'split-left': Side-by-side (Content Left, Image Right) -->
+            <div
+              v-else-if="getDisplayMode(article) === 'split-left'"
+              class="row full-height bg-white"
+            >
+              <div :class="`col-12 ${getContentColClass(article)} carousel-content-col bg-white text-black carousel-padding`">
+                <div :class="`column full-height ${getJustifyClass(article)}`">
+                  <div :class="`carousel-title text-weight-bold text-primary font-serif ${getTextAlignClass(article)}`">
+                    {{ article.title }}
+                  </div>
+                  <div :class="`carousel-description text-grey-8 text-weight-light carousel-desc-padding description-clamped ${getTextAlignClass(article)}`">
+                    {{ article.description }}
+                  </div>
+                  <div :class="`carousel-button-container carousel-button-padding row ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`">
+                    <q-btn
+                      color="primary"
+                      text-color="white"
+                      :label="article.actionText || 'Scopri di più'"
+                      icon-right="arrow_forward"
+                      unelevated
+                      class="carousel-button"
+                      @click="openLink(article.linkUrl)"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div :class="`col-12 ${getImageColClass(article)} carousel-image-col relative-position bg-grey-1`">
+                <q-img
+                  :src="article.imageUrl"
+                  class="full-height full-width"
+                  fit="cover"
+                  position="center"
+                />
+              </div>
+            </div>
+
+            <!-- 4. MODE 'overlay': Floating box positioned with 9 Quadrants -->
+            <div
+              v-else
+              class="row full-height relative-position"
+              :class="getQuadrantPlacementClass(article)"
+            >
+              <div :class="`carousel-overlay-box bg-white text-black shadow-4 rounded-borders q-pa-lg ${getOverlayWidthClass(article)}`">
+                <div :class="`carousel-title text-weight-bold text-primary font-serif q-mb-sm ${getTextAlignClass(article)}`">
+                  {{ article.title }}
+                </div>
+                <div :class="`carousel-description text-grey-8 text-weight-light q-mb-md ${getTextAlignClass(article)}`">
+                  {{ article.description }}
+                </div>
+                <div :class="`row ${article.layoutConfig?.textAlign === 'right' ? 'justify-end' : article.layoutConfig?.textAlign === 'left' ? 'justify-start' : 'justify-center'}`">
+                  <q-btn
+                    color="primary"
+                    text-color="white"
+                    :label="article.actionText || 'Scopri di più'"
+                    icon-right="arrow_forward"
+                    unelevated
+                    class="carousel-button"
+                    @click="openLink(article.linkUrl)"
+                  />
                 </div>
               </div>
             </div>
@@ -282,9 +454,49 @@ const openLink = (url: string) => {
   }
 }
 
+.overlay-width-sm {
+  max-width: 420px;
+}
+.overlay-width-md {
+  max-width: 580px;
+}
+.overlay-width-lg {
+  max-width: 760px;
+}
+
+.carousel-overlay-box {
+  background: rgba(255, 255, 255, 0.96) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.max-width-carousel {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.slide-clean-bg {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+
+.carousel-below-content {
+  padding-bottom: 5.5rem !important;
+}
+
+.overlay-bottom-spacing {
+  padding-bottom: 5.5rem !important;
+}
+
+.transition-height {
+  transition: height 0.3s ease;
+}
+
 /* Adjust for carousel thumbnails */
 :deep(.q-carousel__control--thumbnails) {
   background: white;
-  padding-bottom: 4px;
+  padding-bottom: 6px;
+  z-index: 15;
 }
 </style>
