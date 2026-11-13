@@ -67,6 +67,13 @@ const getTextAlignClass = (article: Article) => {
   if (tAlign === 'right') return 'text-right items-end';
   return 'text-center items-center';
 };
+
+const getButtonJustifyClass = (article: Article) => {
+  const tAlign = article.layoutConfig?.textAlign;
+  if (tAlign === 'left') return 'justify-start';
+  if (tAlign === 'right') return 'justify-end';
+  return 'justify-center';
+};
 </script>
 
 <template>
@@ -155,23 +162,41 @@ const getTextAlignClass = (article: Article) => {
     <!-- 3. SYNCHRONIZED STORY & ACTION PANEL (Directly Underneath Thumbnails) -->
     <div v-if="currentArticle" class="carousel-story-container q-px-md q-pt-md q-pb-md">
       <transition name="fade" mode="out-in">
-        <div :key="currentArticle.id" class="column items-center text-center">
+        <div :key="currentArticle.id" :class="`column ${getTextAlignClass(currentArticle)}`">
+          <!-- Article Category Badge -->
+          <div class="q-mb-xs">
+            <q-chip
+              dense
+              outline
+              size="sm"
+              :color="currentArticle.layoutConfig?.articleType === 'product' ? 'secondary' : 'primary'"
+              class="text-weight-medium"
+            >
+              <q-icon
+                :name="currentArticle.layoutConfig?.articleType === 'product' ? 'sanitizer' : 'photo_camera_front'"
+                size="12px"
+                class="q-mr-xs"
+              />
+              {{ currentArticle.layoutConfig?.articleType === 'product' ? 'Scheda Prodotto' : 'Testimonianza' }}
+            </q-chip>
+          </div>
+
           <!-- Article Title -->
           <h3
-            :class="`text-h4 text-primary font-serif text-weight-bold q-mb-sm carousel-story-title ${getTextAlignClass(currentArticle)}`"
+            :class="`text-h4 text-primary font-serif text-weight-bold q-mb-sm carousel-story-title full-width ${getTextAlignClass(currentArticle)}`"
           >
             {{ currentArticle.title }}
           </h3>
 
           <!-- Article Full Description (Unclamped, elegant spacing) -->
           <div
-            :class="`text-body1 text-grey-8 text-weight-light carousel-story-description q-mb-md ${getTextAlignClass(currentArticle)}`"
+            :class="`text-body1 text-grey-8 text-weight-light carousel-story-description q-mb-md full-width ${getTextAlignClass(currentArticle)}`"
           >
             {{ currentArticle.description }}
           </div>
 
           <!-- Action CTA Button -->
-          <div class="row justify-center q-my-sm">
+          <div :class="`row full-width q-my-sm ${getButtonJustifyClass(currentArticle)}`">
             <q-btn
               color="primary"
               text-color="white"

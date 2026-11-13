@@ -363,22 +363,46 @@ const onSubmit = async () => {
               <div class="text-subtitle2 text-weight-bold q-mb-xs text-grey-9">
                 Anteprima Scheda Coordinata:
               </div>
-              <div class="bg-grey-1 rounded-borders q-pa-md border shadow-1 column items-center text-center">
-                <div class="text-h6 text-primary font-serif text-weight-bold q-mb-xs">
+              <div
+                class="bg-grey-1 rounded-borders q-pa-md border shadow-1 column transition-easy"
+                :class="form.layoutConfig.textAlign === 'left' ? 'items-start text-left' : form.layoutConfig.textAlign === 'right' ? 'items-end text-right' : 'items-center text-center'"
+              >
+                <!-- Badge Tipologia Contenuto -->
+                <q-chip
+                  dense
+                  outline
+                  size="sm"
+                  :color="form.layoutConfig.articleType === 'product' ? 'secondary' : 'primary'"
+                  class="q-mb-xs text-weight-medium"
+                >
+                  <q-icon
+                    :name="form.layoutConfig.articleType === 'product' ? 'sanitizer' : 'photo_camera_front'"
+                    size="12px"
+                    class="q-mr-xs"
+                  />
+                  {{ form.layoutConfig.articleType === 'product' ? 'Scheda Prodotto' : 'Testimonianza Prima & Dopo' }}
+                </q-chip>
+
+                <div class="text-h6 text-primary font-serif text-weight-bold q-mb-xs full-width">
                   {{ form.title || 'Titolo della Storia' }}
                 </div>
-                <div class="text-caption text-grey-7 q-mb-sm line-clamp-3" style="max-height: 60px; overflow: hidden">
+                <div class="text-caption text-grey-7 q-mb-sm line-clamp-3 full-width" style="max-height: 60px; overflow: hidden">
                   {{ form.description || 'La descrizione comparirà qui sotto all\'immagine in tempo reale...' }}
                 </div>
-                <q-btn
-                  color="primary"
-                  unelevated
-                  rounded
-                  size="sm"
-                  :label="form.actionText || 'Scopri di più'"
-                  icon-right="arrow_forward"
-                  class="q-px-md"
-                />
+                <div
+                  class="row full-width q-my-xs"
+                  :class="form.layoutConfig.textAlign === 'left' ? 'justify-start' : form.layoutConfig.textAlign === 'right' ? 'justify-end' : 'justify-center'"
+                >
+                  <q-btn
+                    color="primary"
+                    unelevated
+                    rounded
+                    size="sm"
+                    :label="form.actionText || 'Scopri di più'"
+                    icon-right="arrow_forward"
+                    class="q-px-md"
+                  />
+                </div>
               </div>
             </q-card>
           </div>

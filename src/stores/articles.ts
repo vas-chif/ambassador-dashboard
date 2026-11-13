@@ -22,11 +22,13 @@ import { db } from 'src/boot/firebase';
 import { useSecureLogger } from 'src/shared/logger';
 import type { Article } from 'stores/settings';
 
-const CACHE_KEY_ARTICLES = 'elara_articles_cache';
+const CACHE_KEY_ARTICLES = 'glow_articles';
 
 const getCachedArticles = (): Article[] => {
   try {
-    const raw = localStorage.getItem(CACHE_KEY_ARTICLES);
+    const raw =
+      localStorage.getItem(CACHE_KEY_ARTICLES) ||
+      localStorage.getItem('elara_articles_cache');
     return raw ? (JSON.parse(raw) as Article[]) : [];
   } catch {
     return [];
@@ -36,6 +38,7 @@ const getCachedArticles = (): Article[] => {
 const setCachedArticles = (arts: Article[]) => {
   try {
     localStorage.setItem(CACHE_KEY_ARTICLES, JSON.stringify(arts));
+    localStorage.setItem('elara_articles_cache', JSON.stringify(arts));
   } catch {
     // quota exceeded fallback
   }
@@ -126,7 +129,10 @@ export const useArticlesStore = defineStore('articles', () => {
     loading.value = true;
     try {
       const articlesRef = collection(db, 'articles');
-      await addDoc(articlesRef, article);
+      const docRef = await addDoc(articlesRef, article);
+      const newArticle: Article = { id: docRef.id, ...article };
+      articles.value.push(newArticle);
+      setCachedArticles(articles.value);
       logger.info('Articolo aggiunto con successo');
     } catch (e: unknown) {
       logger.error('Errore aggiunta articolo:', e);
@@ -139,6 +145,13 @@ export const useArticlesStore = defineStore('articles', () => {
   const updateArticle = async (id: string, updates: Partial<Article>) => {
     loading.value = true;
     try {
+      // Optimistic local update
+      const index = articles.value.findIndex((a) => a.id === id);
+      if (index !== -1) {
+        articles.value[index] = { ...articles.value[index], ...updates } as Article;
+        setCachedArticles(articles.value);
+      }
+
       const docRef = doc(db, 'articles', id);
       await updateDoc(docRef, updates);
       logger.info(`Articolo ${id} aggiornato.`);
@@ -153,6 +166,9 @@ export const useArticlesStore = defineStore('articles', () => {
   const deleteArticle = async (id: string) => {
     loading.value = true;
     try {
+      articles.value = articles.value.filter((a) => a.id !== id);
+      setCachedArticles(articles.value);
+
       const docRef = doc(db, 'articles', id);
       await deleteDoc(docRef);
       logger.info(`Articolo ${id} eliminato.`);
