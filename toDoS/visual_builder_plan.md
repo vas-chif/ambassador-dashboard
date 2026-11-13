@@ -274,5 +274,22 @@
   - [x] `yarn build`: compilazione SPA riuscita al 100%.
 
 ---
+
+### 📑 FASE 15: Duplica Articolo & Prodotto (Admin & Preview) e Filtri Ricerca/Categoria
+- [x] **15.1 Duplica Prodotto**:
+  - [x] In Live Preview: aggiunto pulsante `content_copy` nella pillola in-place su ciascuna card prodotto in [ProductCard.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ProductCard.vue) con clonazione immediata e notifica.
+  - [x] In Console Admin: aggiunto pulsante `content_copy` nella colonna azioni di [ProductListTable.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ProductListTable.vue) e gestione in [AdminProducts.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminProducts.vue).
+- [x] **15.2 Duplica Articolo**:
+  - [x] In Live Preview: `q-btn-group` in [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue) con pulsanti `[ ✏️ Modifica | 📑 Duplica ]` per clonare istantaneamente l'articolo visibile con handler in [LandingPage.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/LandingPage.vue).
+  - [x] In Console Admin: aggiunto pulsante `content_copy` in [AdminArticles.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminArticles.vue) con toast di conferma.
+- [x] **15.3 Ricerca Testuale & Filtri Categoria in Console Admin**:
+  - [x] **Prodotti** ([ProductListTable.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ProductListTable.vue)): barra di ricerca testuale reattiva (nome/descrizione) e dropdown categorie dinamiche con stato vuoto personalizzato.
+  - [x] **Articoli** ([AdminArticles.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminArticles.vue)): barra di ricerca testuale e filtri a pillola per tipologia (*Tutti*, *Testimonianze*, *Schede Prodotto*) con stato vuoto e reset rapido.
+- [x] **15.4 Verifica di Qualità**:
+  - [x] `npx vue-tsc --noEmit`: 0 errori.
+  - [x] `yarn lint`: 0 errori.
+  - [x] `yarn build`: SPA compilata con successo.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
