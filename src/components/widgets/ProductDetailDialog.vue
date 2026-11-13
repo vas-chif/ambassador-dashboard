@@ -54,6 +54,24 @@ const handleRate = async (val: number) => {
   }
 };
 
+const handleToggleLike = async (prod: Product) => {
+  const isNowLiked = toggleLike(prod.id);
+  try {
+    await store.toggleProductLike(prod.id, isNowLiked);
+  } catch {
+    // Fallback in local storage
+  }
+};
+
+const handleToggleSave = async (prod: Product) => {
+  const isNowSaved = toggleSave(prod.id);
+  try {
+    await store.toggleProductSave(prod.id, isNowSaved);
+  } catch {
+    // Fallback in local storage
+  }
+};
+
 const openExternalLink = (url?: string) => {
   if (url) window.open(url, '_blank');
 };
@@ -138,27 +156,37 @@ const openExternalLink = (url?: string) => {
       <q-card-actions class="bg-white q-pa-md row items-center justify-between no-wrap">
         <!-- Interaction Buttons Left -->
         <div class="row q-gutter-x-sm items-center">
-          <!-- Like Button -->
-          <q-btn
-            round
-            flat
-            :icon="isLiked(product.id) ? 'favorite' : 'favorite_border'"
-            :color="isLiked(product.id) ? 'red' : 'grey'"
-            @click="toggleLike(product.id)"
-          >
-            <q-tooltip>Mi Piace</q-tooltip>
-          </q-btn>
+          <!-- Like Button with Count -->
+          <div class="row items-center">
+            <q-btn
+              round
+              flat
+              :icon="isLiked(product.id) ? 'favorite' : 'favorite_border'"
+              :color="isLiked(product.id) ? 'red' : 'grey'"
+              @click="handleToggleLike(product)"
+            >
+              <q-tooltip>{{ isLiked(product.id) ? 'Rimuovi Mi Piace' : 'Mi Piace' }}</q-tooltip>
+            </q-btn>
+            <span v-if="product.likesCount && product.likesCount > 0" class="text-caption text-grey-7 q-mr-xs">
+              {{ product.likesCount }}
+            </span>
+          </div>
 
-          <!-- Save Button -->
-          <q-btn
-            round
-            flat
-            :icon="isSaved(product.id) ? 'bookmark' : 'bookmark_border'"
-            :color="isSaved(product.id) ? 'primary' : 'grey'"
-            @click="toggleSave(product.id)"
-          >
-            <q-tooltip>Salva</q-tooltip>
-          </q-btn>
+          <!-- Save Button with Count -->
+          <div class="row items-center">
+            <q-btn
+              round
+              flat
+              :icon="isSaved(product.id) ? 'bookmark' : 'bookmark_border'"
+              :color="isSaved(product.id) ? 'primary' : 'grey'"
+              @click="handleToggleSave(product)"
+            >
+              <q-tooltip>{{ isSaved(product.id) ? 'Rimuovi dai Salvati' : 'Salva nei Preferiti' }}</q-tooltip>
+            </q-btn>
+            <span v-if="product.savesCount && product.savesCount > 0" class="text-caption text-grey-7 q-mr-xs">
+              {{ product.savesCount }}
+            </span>
+          </div>
 
           <!-- Share -->
           <q-btn round flat icon="share" color="grey" @click="handleShare(product)">

@@ -25,28 +25,36 @@ export const useProductInteractions = () => {
     LocalStorage.set('productRatings', productRatings.value);
   };
 
-  const toggleLike = (productId: string) => {
+  const toggleLike = (productId: string): boolean => {
     const index = likedProducts.value.indexOf(productId);
+    let isNowLiked = false;
     if (index === -1) {
       likedProducts.value.push(productId);
+      isNowLiked = true;
     } else {
       likedProducts.value.splice(index, 1);
+      isNowLiked = false;
     }
     saveInteractions();
+    return isNowLiked;
   };
 
   const isLiked = (productId: string) => {
     return likedProducts.value.includes(productId);
   };
 
-  const toggleSave = (productId: string) => {
+  const toggleSave = (productId: string): boolean => {
     const index = savedProducts.value.indexOf(productId);
+    let isNowSaved = false;
     if (index === -1) {
       savedProducts.value.push(productId);
+      isNowSaved = true;
     } else {
       savedProducts.value.splice(index, 1);
+      isNowSaved = false;
     }
     saveInteractions();
+    return isNowSaved;
   };
 
   const isSaved = (productId: string) => {

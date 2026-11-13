@@ -12,4 +12,6 @@ export interface Product {
   instructions?: string;
   ratingAverage?: number;
   ratingCount?: number;
+  likesCount?: number;
+  savesCount?: number;
 }

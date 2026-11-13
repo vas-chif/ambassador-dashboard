@@ -94,6 +94,7 @@ const confirmDelete = (product: Product) => {
           <th class="text-left">Image</th>
           <th class="text-left">Name</th>
           <th class="text-left">Category</th>
+          <th class="text-center" style="width: 170px">Gradimento & Statistiche</th>
           <th class="text-center" style="width: 120px">Actions</th>
         </tr>
       </thead>
@@ -116,6 +117,28 @@ const confirmDelete = (product: Product) => {
             </td>
             <td>{{ row.name }}</td>
             <td>{{ row.category }}</td>
+            <td class="text-center">
+              <div class="row items-center justify-center q-gutter-x-sm no-wrap">
+                <!-- Likes -->
+                <div class="row items-center q-gutter-x-xs" title="Mi Piace totali">
+                  <q-icon name="favorite" color="red" size="16px" />
+                  <span class="text-caption text-weight-bold">{{ row.likesCount || 0 }}</span>
+                </div>
+                <!-- Saves -->
+                <div class="row items-center q-gutter-x-xs" title="Salvati nei preferiti">
+                  <q-icon name="bookmark" color="primary" size="16px" />
+                  <span class="text-caption text-weight-bold">{{ row.savesCount || 0 }}</span>
+                </div>
+                <!-- Rating -->
+                <div class="row items-center q-gutter-x-xs" title="Valutazione media e voti">
+                  <q-icon name="star" color="orange" size="16px" />
+                  <span class="text-caption text-weight-bold">{{ row.ratingAverage || '-' }}</span>
+                  <span v-if="row.ratingCount" class="text-caption text-grey-6" style="font-size: 10px">
+                    ({{ row.ratingCount }})
+                  </span>
+                </div>
+              </div>
+            </td>
             <td class="text-center">
               <q-btn flat round color="primary" icon="edit" size="sm" @click="emit('edit', row)" />
               <q-btn

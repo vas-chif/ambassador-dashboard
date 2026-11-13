@@ -22,6 +22,7 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  increment,
 } from 'firebase/firestore';
 import { useSecureLogger } from 'src/shared/logger';
 import type { Product } from 'src/types/product';
@@ -267,6 +268,66 @@ export const useProductsStore = defineStore('products', () => {
     }
   };
 
+  const toggleProductLike = async (productId: string, isNowLiked: boolean) => {
+    const delta = isNowLiked ? 1 : -1;
+    // Optimistic local update
+    const index = products.value.findIndex((p) => p.id === productId);
+    if (index !== -1) {
+      const current = products.value[index]?.likesCount || 0;
+      products.value[index] = {
+        ...products.value[index],
+        likesCount: Math.max(0, current + delta),
+        id: productId,
+      } as Product;
+      try {
+        localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+      } catch {
+        // Ignore quota error
+      }
+    }
+
+    try {
+      const docRef = doc(db, 'products', productId);
+      await updateDoc(docRef, {
+        likesCount: increment(delta),
+      });
+      logger.info('Product like toggled in Firestore', { id: productId, isNowLiked, delta });
+    } catch (error: unknown) {
+      logger.error('Error toggling product like in Firestore', error);
+      throw error;
+    }
+  };
+
+  const toggleProductSave = async (productId: string, isNowSaved: boolean) => {
+    const delta = isNowSaved ? 1 : -1;
+    // Optimistic local update
+    const index = products.value.findIndex((p) => p.id === productId);
+    if (index !== -1) {
+      const current = products.value[index]?.savesCount || 0;
+      products.value[index] = {
+        ...products.value[index],
+        savesCount: Math.max(0, current + delta),
+        id: productId,
+      } as Product;
+      try {
+        localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
+      } catch {
+        // Ignore quota error
+      }
+    }
+
+    try {
+      const docRef = doc(db, 'products', productId);
+      await updateDoc(docRef, {
+        savesCount: increment(delta),
+      });
+      logger.info('Product save toggled in Firestore', { id: productId, isNowSaved, delta });
+    } catch (error: unknown) {
+      logger.error('Error toggling product save in Firestore', error);
+      throw error;
+    }
+  };
+
   return {
     products,
     loading,
@@ -279,5 +340,7 @@ export const useProductsStore = defineStore('products', () => {
     updateProductsOrder,
     uploadProductImage,
     rateProduct,
+    toggleProductLike,
+    toggleProductSave,
   };
 });
