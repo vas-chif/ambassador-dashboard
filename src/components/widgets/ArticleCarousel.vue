@@ -83,8 +83,8 @@ const getButtonJustifyClass = (article: Article) => {
       <!-- In-Place Quick Edit Current Article (Preview Mode Only) -->
       <div
         v-if="isPreview && currentArticle"
-        class="carousel-quick-edit-action absolute-top-right q-ma-md"
-        style="z-index: 30"
+        class="carousel-quick-edit-action absolute-top-right"
+        style="top: 54px; right: 16px; z-index: 70"
       >
         <q-btn
           unelevated
