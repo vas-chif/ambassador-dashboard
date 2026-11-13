@@ -41,6 +41,9 @@ const activeSettingsSection = ref<string>('');
 // Temporary settings form for section customization
 const isSettingsDialogMaximized = ref(false);
 const isSettingsDialogWide = ref(true);
+const showAddSectionDialog = ref(false);
+const targetAddIndex = ref<number | null>(null);
+const draggingArticleIndex = ref<number | null>(null);
 
 const dialogCardStyle = computed(() => {
   if (isSettingsDialogMaximized.value) {
@@ -65,6 +68,7 @@ const sectionForm = ref<{
   profileInstagram: string;
   profileTiktok: string;
   profileEmail: string;
+  articleFilterType: 'all' | 'testimonial' | 'product';
 }>({
   productsTitle: '',
   bannerText: '',
@@ -77,6 +81,7 @@ const sectionForm = ref<{
   profileInstagram: '',
   profileTiktok: '',
   profileEmail: '',
+  articleFilterType: 'all',
 });
 
 // Section type helpers
@@ -90,12 +95,16 @@ const getSectionType = (secId: string): string => {
 
 const getSectionLabel = (secId: string): string => {
   const type = getSectionType(secId);
-  const isCopy = secId.includes('_copy');
-  if (type === 'profile') return isCopy ? 'Profilo (Copia)' : 'Profilo & Social';
-  if (type === 'articles') return isCopy ? 'Carosello Articoli (Copia)' : 'Carosello Articoli';
-  if (type === 'actionBanner') return isCopy ? 'Banner Azione (Copia)' : 'Banner Promozionale';
-  if (type === 'products') return isCopy ? 'Griglia Prodotti (Copia)' : 'Griglia Prodotti';
+  const isCustom = secId.includes('_copy') || secId.includes('_custom');
+  if (type === 'profile') return isCustom ? 'Profilo (Extra)' : 'Profilo & Social';
+  if (type === 'articles') return isCustom ? 'Carosello Articoli (Extra)' : 'Carosello Articoli';
+  if (type === 'actionBanner') return isCustom ? 'Banner Azione (Extra)' : 'Banner Promozionale';
+  if (type === 'products') return isCustom ? 'Griglia Prodotti (Extra)' : 'Griglia Prodotti';
   return secId;
+};
+
+const getCustomSectionConfig = (sectionId: string) => {
+  return settingsStore.profile.customSections?.[sectionId] || {};
 };
 
 const getSectionIcon = (secId: string): string => {
@@ -202,18 +211,6 @@ const duplicateSection = async (sectionId: string, index: number) => {
   });
 };
 
-const removeDuplicateSection = async (sectionId: string) => {
-  const list = sectionsList.value.filter((id) => id !== sectionId);
-  const hidden = (settingsStore.profile.hiddenSections || []).filter((id) => id !== sectionId);
-
-  await settingsStore.updateProfile({ sectionsOrder: list, hiddenSections: hidden });
-  $q.notify({
-    type: 'info',
-    message: 'Sezione rimossa',
-    timeout: 1000,
-  });
-};
-
 const openQuickAdd = (sectionId: string) => {
   const type = getSectionType(sectionId);
   if (type === 'articles') {
@@ -225,38 +222,197 @@ const openQuickAdd = (sectionId: string) => {
   }
 };
 
+const openEditArticle = (article: Article) => {
+  selectedArticle.value = { ...article };
+  showArticleDialog.value = true;
+};
+
+const confirmDeleteArticle = (article: Article) => {
+  $q.dialog({
+    title: 'Elimina Articolo',
+    message: `Sei sicuro di voler eliminare definitivamente "${article.title}"?`,
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void (async () => {
+      try {
+        await settingsStore.deleteArticle(article.id);
+        $q.notify({ type: 'positive', message: 'Articolo eliminato con successo' });
+      } catch {
+        $q.notify({ type: 'negative', message: 'Errore durante l\'eliminazione' });
+      }
+    })();
+  });
+};
+
+const toggleArticleStatus = async (article: Article) => {
+  try {
+    const newStatus = !article.active;
+    await settingsStore.updateArticle(article.id, { active: newStatus });
+    $q.notify({
+      type: 'info',
+      message: `Articolo ${newStatus ? 'visibile' : 'nascosto'}`,
+      timeout: 800,
+    });
+  } catch {
+    $q.notify({ type: 'negative', message: 'Errore durante l\'aggiornamento dello stato' });
+  }
+};
+
+const moveArticle = async (index: number, direction: 'up' | 'down') => {
+  const list = [...settingsStore.articles];
+  const targetIndex = direction === 'up' ? index - 1 : index + 1;
+  if (targetIndex < 0 || targetIndex >= list.length) return;
+  const item = list[index];
+  if (!item) return;
+  list.splice(index, 1);
+  list.splice(targetIndex, 0, item);
+  await settingsStore.updateArticlesOrder(list);
+  $q.notify({ type: 'positive', message: 'Ordine aggiornato', timeout: 600 });
+};
+
+const onArticleDragStart = (index: number) => {
+  draggingArticleIndex.value = index;
+};
+
+const onArticleDrop = async (targetIndex: number) => {
+  if (draggingArticleIndex.value === null || draggingArticleIndex.value === targetIndex) return;
+  const list = [...settingsStore.articles];
+  const item = list[draggingArticleIndex.value];
+  if (!item) return;
+  list.splice(draggingArticleIndex.value, 1);
+  list.splice(targetIndex, 0, item);
+  draggingArticleIndex.value = null;
+  await settingsStore.updateArticlesOrder(list);
+  $q.notify({ type: 'positive', message: 'Ordine articoli aggiornato', timeout: 800 });
+};
+
+const openAddSection = (index?: number) => {
+  targetAddIndex.value = index !== undefined ? index : sectionsList.value.length - 1;
+  showAddSectionDialog.value = true;
+};
+
+const addSection = async (type: 'articles' | 'products' | 'actionBanner') => {
+  const list = [...sectionsList.value];
+  const newId = `${type}_custom_${Date.now().toString(36)}`;
+  const insertAt = targetAddIndex.value !== null ? targetAddIndex.value + 1 : list.length;
+  list.splice(insertAt, 0, newId);
+
+  const customSections = { ...(settingsStore.profile.customSections || {}) };
+  if (type === 'products') {
+    customSections[newId] = { title: 'Nuova Selezione Prodotti' };
+  } else if (type === 'actionBanner') {
+    customSections[newId] = {
+      bannerText: 'Scopri i nostri percorsi benessere personalizzati',
+      bannerButtonText: 'Prenota Ora',
+      bannerEnabled: true,
+    };
+  } else if (type === 'articles') {
+    customSections[newId] = { articleFilterType: 'all' };
+  }
+
+  await settingsStore.updateProfile({
+    sectionsOrder: list,
+    customSections,
+  });
+
+  showAddSectionDialog.value = false;
+  $q.notify({
+    type: 'positive',
+    message: 'Nuova sezione aggiunta con successo!',
+    icon: 'add_circle',
+    timeout: 1200,
+  });
+};
+
+const removeSection = (sectionId: string) => {
+  $q.dialog({
+    title: 'Elimina Sezione',
+    message: `Sei sicuro di voler rimuovere la sezione "${getSectionLabel(sectionId)}" dalla vetrina?`,
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    void (async () => {
+      const list = sectionsList.value.filter((id) => id !== sectionId);
+      const customSections = { ...(settingsStore.profile.customSections || {}) };
+      delete customSections[sectionId];
+      await settingsStore.updateProfile({
+        sectionsOrder: list,
+        customSections,
+      });
+      $q.notify({
+        type: 'info',
+        message: 'Sezione rimossa',
+        timeout: 1000,
+      });
+    })();
+  });
+};
+
 const openSectionSettings = (sectionId: string) => {
   activeSettingsSection.value = sectionId;
+  const custom = getCustomSectionConfig(sectionId);
   sectionForm.value = {
-    productsTitle: settingsStore.profile.productsSectionTitle || 'I Miei Prodotti Preferiti',
-    bannerText: settingsStore.profile.actionBannerText || '',
-    bannerButtonText: settingsStore.profile.actionBannerButtonText || 'Skin Care',
-    bannerUrl: settingsStore.profile.actionBannerUrl || '',
-    bannerEnabled: settingsStore.profile.actionBannerEnabled !== false,
+    productsTitle: custom.title || settingsStore.profile.productsSectionTitle || 'I Miei Prodotti Preferiti',
+    bannerText: custom.bannerText || settingsStore.profile.actionBannerText || '',
+    bannerButtonText: custom.bannerButtonText || settingsStore.profile.actionBannerButtonText || 'Skin Care',
+    bannerUrl: custom.bannerUrl || settingsStore.profile.actionBannerUrl || '',
+    bannerEnabled: (custom.bannerEnabled !== undefined ? custom.bannerEnabled : settingsStore.profile.actionBannerEnabled) !== false,
     profileName: settingsStore.profile.name || '',
     profileBio: settingsStore.profile.bio || '',
     profileWhatsapp: settingsStore.profile.whatsapp || '',
     profileInstagram: settingsStore.profile.instagram || '',
     profileTiktok: settingsStore.profile.tiktok || '',
     profileEmail: settingsStore.profile.email || '',
+    articleFilterType: custom.articleFilterType || 'all',
   };
   showSettingsDialog.value = true;
 };
 
 const saveSectionSettings = async () => {
-  const type = getSectionType(activeSettingsSection.value);
+  const sectionId = activeSettingsSection.value;
+  const type = getSectionType(sectionId);
+  const isDefaultSection = ['profile', 'articles', 'actionBanner', 'products'].includes(sectionId);
 
   if (type === 'products') {
-    await settingsStore.updateProfile({
-      productsSectionTitle: sectionForm.value.productsTitle,
-    });
+    if (isDefaultSection) {
+      await settingsStore.updateProfile({
+        productsSectionTitle: sectionForm.value.productsTitle,
+      });
+    } else {
+      const customSections = { ...(settingsStore.profile.customSections || {}) };
+      customSections[sectionId] = {
+        ...customSections[sectionId],
+        title: sectionForm.value.productsTitle,
+      };
+      await settingsStore.updateProfile({ customSections });
+    }
   } else if (type === 'actionBanner') {
-    await settingsStore.updateProfile({
-      actionBannerText: sectionForm.value.bannerText,
-      actionBannerButtonText: sectionForm.value.bannerButtonText,
-      actionBannerUrl: sectionForm.value.bannerUrl,
-      actionBannerEnabled: sectionForm.value.bannerEnabled,
-    });
+    if (isDefaultSection) {
+      await settingsStore.updateProfile({
+        actionBannerText: sectionForm.value.bannerText,
+        actionBannerButtonText: sectionForm.value.bannerButtonText,
+        actionBannerUrl: sectionForm.value.bannerUrl,
+        actionBannerEnabled: sectionForm.value.bannerEnabled,
+      });
+    } else {
+      const customSections = { ...(settingsStore.profile.customSections || {}) };
+      customSections[sectionId] = {
+        ...customSections[sectionId],
+        bannerText: sectionForm.value.bannerText,
+        bannerButtonText: sectionForm.value.bannerButtonText,
+        bannerUrl: sectionForm.value.bannerUrl,
+        bannerEnabled: sectionForm.value.bannerEnabled,
+      };
+      await settingsStore.updateProfile({ customSections });
+    }
+  } else if (type === 'articles') {
+    const customSections = { ...(settingsStore.profile.customSections || {}) };
+    customSections[sectionId] = {
+      ...customSections[sectionId],
+      articleFilterType: sectionForm.value.articleFilterType,
+    };
+    await settingsStore.updateProfile({ customSections });
   } else if (type === 'profile') {
     await settingsStore.updateProfile({
       name: sectionForm.value.profileName,
@@ -391,18 +547,31 @@ onMounted(() => {
             <q-tooltip>Impostazioni Layout Sezione</q-tooltip>
           </q-btn>
 
-          <!-- 7. Remove if duplicated -->
+          <!-- 7. Insert Section Below -->
           <q-btn
-            v-if="section.includes('_copy')"
+            dense
+            flat
+            round
+            size="sm"
+            icon="add"
+            color="positive"
+            @click="openAddSection(index)"
+          >
+            <q-tooltip>Inserisci Nuova Sezione Sotto</q-tooltip>
+          </q-btn>
+
+          <!-- 8. Remove Section if not main profile -->
+          <q-btn
+            v-if="section !== 'profile'"
             dense
             flat
             round
             size="sm"
             icon="delete"
             color="negative"
-            @click="removeDuplicateSection(section)"
+            @click="removeSection(section)"
           >
-            <q-tooltip>Elimina Sezione Duplicata</q-tooltip>
+            <q-tooltip>Elimina Questa Sezione</q-tooltip>
           </q-btn>
         </div>
 
@@ -511,7 +680,11 @@ onMounted(() => {
           v-else-if="getSectionType(section) === 'articles'"
           class="q-mb-xl"
         >
-          <ArticleCarousel />
+          <ArticleCarousel
+            :filter-type="getCustomSectionConfig(section).articleFilterType || 'all'"
+            :section-id="section"
+            @edit-article="openEditArticle"
+          />
         </div>
 
         <!-- 3. Action Banner (The pill banner) Section -->
@@ -522,13 +695,14 @@ onMounted(() => {
           <div class="row justify-center">
             <div class="col-12 col-md-10 col-lg-8">
               <a
-                :href="bannerTargetUrl"
-                :target="bannerTargetUrl.startsWith('http') ? '_blank' : undefined"
+                :href="getCustomSectionConfig(section).bannerUrl || bannerTargetUrl"
+                :target="(getCustomSectionConfig(section).bannerUrl || bannerTargetUrl).startsWith('http') ? '_blank' : undefined"
                 class="action-pill-banner row no-wrap items-center justify-between q-pa-md shadow-4"
               >
                 <div class="banner-text q-pl-lg">
                   <div class="text-h6 text-primary text-weight-medium line-height-tight q-mb-sm">
                     {{
+                      getCustomSectionConfig(section).bannerText ||
                       settingsStore.profile.actionBannerText ||
                       'Acquista qui con codice sconto la tua Skin Care e integrazione personalizzata'
                     }}
@@ -538,7 +712,7 @@ onMounted(() => {
                   <q-avatar size="100px" class="shadow-8">
                     <q-btn
                       color="primary"
-                      :label="settingsStore.profile.actionBannerButtonText || 'Skin Care'"
+                      :label="getCustomSectionConfig(section).bannerButtonText || settingsStore.profile.actionBannerButtonText || 'Skin Care'"
                       unelevated
                       rounded
                       padding="xs lg"
@@ -558,7 +732,7 @@ onMounted(() => {
         >
           <div class="text-center q-mb-lg">
             <h2 class="text-h4 text-weight-light q-mb-sm" :style="{ color: BRAND_PRIMARY }">
-              {{ settingsStore.profile.productsSectionTitle || 'I Miei Prodotti Preferiti' }}
+              {{ getCustomSectionConfig(section).title || settingsStore.profile.productsSectionTitle || 'I Miei Prodotti Preferiti' }}
             </h2>
             <div class="separator-line mx-auto" :style="{ backgroundColor: BRAND_GOLD }"></div>
           </div>
@@ -567,6 +741,19 @@ onMounted(() => {
         </div>
       </div>
     </template>
+
+    <!-- Add Section Button at Bottom of Preview -->
+    <div v-if="isPreview" class="row justify-center q-py-xl bg-grey-1">
+      <q-btn
+        unelevated
+        color="primary"
+        icon="add_circle"
+        label="Aggiungi Nuova Sezione alla Pagina"
+        size="md"
+        class="shadow-3 q-px-xl q-py-sm rounded-borders text-weight-bold"
+        @click="openAddSection()"
+      />
+    </div>
 
     <!-- Dialogs -->
     <ContactDialog v-model="showContactDialog" />
@@ -762,26 +949,136 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Articles Quick Info -->
+          <!-- Articles Settings & Drag & Drop Reordering -->
           <div v-else-if="getSectionType(activeSettingsSection) === 'articles'" class="column q-gutter-y-md">
-            <div class="text-body2 text-grey-8">
-              Il carosello mostra automaticamente gli articoli e le testimonianze attive in ordine di visualizzazione.
+            <!-- Filter Type for this Carousel -->
+            <div class="q-pa-sm bg-grey-1 rounded-borders">
+              <div class="text-caption text-weight-bold text-primary q-mb-xs">
+                Contenuti da mostrare in questo carosello:
+              </div>
+              <q-btn-toggle
+                v-model="sectionForm.articleFilterType"
+                toggle-color="primary"
+                flat
+                dense
+                no-caps
+                :options="[
+                  { label: 'Tutti gli Articoli', value: 'all' },
+                  { label: '📸 Solo Testimonianze', value: 'testimonial' },
+                  { label: '🧴 Solo Schede Prodotto', value: 'product' },
+                ]"
+              />
             </div>
-            <div class="row items-center justify-between q-pa-md bg-grey-2 rounded-borders">
+
+            <!-- Header + Quick Add -->
+            <div class="row items-center justify-between q-mt-sm">
               <div>
-                <div class="text-subtitle2 text-weight-bold text-primary">Vuoi aggiungere un nuovo articolo o storia?</div>
-                <div class="text-caption text-grey-8">
-                  Carica una nuova storia prima/dopo con foto 16:9, descrizione e link di acquisto.
+                <div class="text-subtitle2 text-weight-bold text-primary">
+                  Ordina Articoli (Trascina o usa le frecce):
+                </div>
+                <div class="text-caption text-grey-7">
+                  L'ordine stabilisce la sequenza di scorrimento delle slide.
                 </div>
               </div>
               <q-btn
                 color="primary"
+                size="sm"
                 icon="add"
                 label="Nuovo Articolo"
                 unelevated
-                class="q-px-md"
                 @click="showSettingsDialog = false; openQuickAdd('articles')"
               />
+            </div>
+
+            <!-- Draggable List of Articles -->
+            <div class="column q-gutter-y-xs q-mt-xs">
+              <div
+                v-for="(art, aIdx) in settingsStore.articles"
+                :key="art.id"
+                draggable="true"
+                class="article-order-item row items-center justify-between q-pa-sm rounded-borders transition-easy"
+                :class="{ 'bg-grey-2': art.active, 'bg-grey-3 text-grey-6': !art.active }"
+                @dragstart="onArticleDragStart(aIdx)"
+                @dragover.prevent
+                @drop="onArticleDrop(aIdx)"
+              >
+                <!-- Left: Drag Handle + Thumbnail + Info -->
+                <div class="row items-center q-gutter-sm col overflow-hidden">
+                  <q-icon name="drag_indicator" size="20px" class="cursor-grab text-grey-7 flex-shrink-0" />
+                  <q-avatar rounded size="42px" class="bg-grey-4 flex-shrink-0">
+                    <img v-if="art.imageUrl" :src="art.imageUrl" style="object-fit: cover" />
+                    <q-icon v-else name="image" color="grey" />
+                  </q-avatar>
+                  <div class="col ellipsis">
+                    <div class="text-body2 text-weight-bold ellipsis">{{ art.title }}</div>
+                    <div class="text-caption text-grey-7 row items-center q-gutter-xs">
+                      <span>#{{ aIdx + 1 }}</span>
+                      <span>•</span>
+                      <span>{{ art.layoutConfig?.articleType === 'product' ? '🧴 Prodotto' : '📸 Testimonianza' }}</span>
+                      <span v-if="!art.active" class="text-negative text-weight-bold">• Nascosto</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: Ordering & Actions -->
+                <div class="row items-center q-gutter-xs flex-shrink-0">
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    size="sm"
+                    icon="arrow_upward"
+                    :disable="aIdx === 0"
+                    @click="moveArticle(aIdx, 'up')"
+                  >
+                    <q-tooltip>Sposta Su</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    size="sm"
+                    icon="arrow_downward"
+                    :disable="aIdx === settingsStore.articles.length - 1"
+                    @click="moveArticle(aIdx, 'down')"
+                  >
+                    <q-tooltip>Sposta Giù</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    size="sm"
+                    :icon="art.active ? 'visibility' : 'visibility_off'"
+                    :color="art.active ? 'positive' : 'grey'"
+                    @click="toggleArticleStatus(art)"
+                  >
+                    <q-tooltip>{{ art.active ? 'Nascondi dalla vetrina' : 'Mostra nella vetrina' }}</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    size="sm"
+                    icon="edit"
+                    color="primary"
+                    @click="showSettingsDialog = false; openEditArticle(art)"
+                  >
+                    <q-tooltip>Modifica Articolo</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    dense
+                    flat
+                    round
+                    size="sm"
+                    icon="delete"
+                    color="negative"
+                    @click="confirmDeleteArticle(art)"
+                  >
+                    <q-tooltip>Elimina Articolo</q-tooltip>
+                  </q-btn>
+                </div>
+              </div>
             </div>
           </div>
         </q-card-section>
@@ -791,6 +1088,90 @@ onMounted(() => {
         <q-card-actions align="right" class="q-pa-md bg-grey-1">
           <q-btn flat label="Annulla" color="grey-7" v-close-popup class="q-px-md" />
           <q-btn unelevated label="Salva Modifiche" color="primary" class="q-px-xl text-weight-bold" @click="saveSectionSettings" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Add Section Dialog -->
+    <q-dialog v-model="showAddSectionDialog">
+      <q-card style="width: 580px; max-width: 95vw" class="rounded-borders overflow-hidden">
+        <q-toolbar class="bg-primary text-white">
+          <q-icon name="add_circle" size="22px" class="q-mr-sm" />
+          <q-toolbar-title class="text-subtitle1 text-weight-bold">
+            Aggiungi Nuova Sezione alla Vetrina
+          </q-toolbar-title>
+          <q-btn flat round dense icon="close" v-close-popup />
+        </q-toolbar>
+
+        <q-card-section class="q-pa-md">
+          <div class="text-caption text-grey-8 q-mb-md">
+            Scegli il tipo di blocco da inserire. Potrai personalizzarne contenuti, testi e posizione in qualsiasi momento.
+          </div>
+
+          <div class="column q-gutter-y-sm">
+            <!-- 1. Carosello Articoli -->
+            <q-card
+              flat
+              bordered
+              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
+              @click="addSection('articles')"
+            >
+              <div class="row items-center q-gutter-md">
+                <q-avatar color="primary" text-color="white" icon="view_carousel" size="44px" />
+                <div>
+                  <div class="text-subtitle1 text-weight-bold text-primary">Carosello Articoli & Storie</div>
+                  <div class="text-caption text-grey-7">
+                    Carosello dinamico per testimonianze prima/dopo, storie cliniche o consigli di bellezza.
+                  </div>
+                </div>
+              </div>
+              <q-icon name="chevron_right" size="24px" color="grey-6" />
+            </q-card>
+
+            <!-- 2. Griglia Prodotti -->
+            <q-card
+              flat
+              bordered
+              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
+              @click="addSection('products')"
+            >
+              <div class="row items-center q-gutter-md">
+                <q-avatar color="primary" text-color="white" icon="grid_view" size="44px" />
+                <div>
+                  <div class="text-subtitle1 text-weight-bold text-primary">Griglia Prodotti</div>
+                  <div class="text-caption text-grey-7">
+                    Vetrina catalogo prodotti con foto, prezzo, recensioni e ordine immediato WhatsApp.
+                  </div>
+                </div>
+              </div>
+              <q-icon name="chevron_right" size="24px" color="grey-6" />
+            </q-card>
+
+            <!-- 3. Banner Promozionale -->
+            <q-card
+              flat
+              bordered
+              class="cursor-pointer hover-scale transition-easy q-pa-md row items-center justify-between"
+              @click="addSection('actionBanner')"
+            >
+              <div class="row items-center q-gutter-md">
+                <q-avatar color="primary" text-color="white" icon="smart_button" size="44px" />
+                <div>
+                  <div class="text-subtitle1 text-weight-bold text-primary">Banner Promozionale / Azione</div>
+                  <div class="text-caption text-grey-7">
+                    Pillola promozionale con bottone d'azione per sconti, contatti WhatsApp o trattamenti.
+                  </div>
+                </div>
+              </div>
+              <q-icon name="chevron_right" size="24px" color="grey-6" />
+            </q-card>
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-sm bg-grey-1">
+          <q-btn flat label="Annulla" color="grey-7" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -901,6 +1282,28 @@ onMounted(() => {
     top: 6px;
     right: 8px;
     padding: 2px 6px;
+  }
+}
+
+.article-order-item {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  &:hover {
+    background-color: #f0f1f3 !important;
+  }
+}
+
+.cursor-grab {
+  cursor: grab;
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.hover-scale {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
   }
 }
 </style>

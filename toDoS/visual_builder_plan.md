@@ -108,6 +108,36 @@
 
 ---
 
+### 🔀 FASE 7: Riordino Articoli (Drag & Drop) & Modifica Rapida Singolo Articolo in Anteprima
+- [x] **7.1 Modifica Rapida dell'Articolo Visibile Direttamente nel Carosello**:
+  - [x] Pulsante rapido `✏️ Modifica Questo Articolo` posizionato direttamente sulla slide attiva o nella toolbar del carosello in modalità preview.
+  - [x] Apertura istantanea di `ArticleFormDialog.vue` precaricato con l'articolo corrente (`currentArticle`).
+  - [x] Sincronizzazione immediata su schermo dopo il salvataggio.
+- [x] **7.2 Gestore Riordino Articoli con Drag & Drop e Frecce**:
+  - [x] Interfaccia interattiva nel dialog impostazioni carosello (o drawer dedicato) con lista delle card articolo.
+  - [x] Supporto Drag & Drop nativo (HTML5 / touch-friendly con handle ⠿) e pulsanti freccia (⬆️ / ⬇️) per invertire l'ordine con un clic.
+  - [x] Metodo `updateArticlesOrder` in `settingsStore` con aggiornamento immediato della cache locale (`localStorage`) e salvataggio batch in Firestore.
+- [x] **7.3 Azioni Rapide per Singolo Articolo**:
+  - [x] Toggle visibilità immediato (Mostra/Nascondi) dalla lista.
+  - [x] Eliminazione rapida articolo con richiesta di conferma Quasar.
+
+---
+
+### 🧱 FASE 8: Generatore Multi-Sezione (+ Aggiungi Sezione & Configurazioni Indipendenti)
+- [x] **8.1 Pulsante Globale e Contestuale "+ Aggiungi Nuova Sezione"**:
+  - [x] Pulsante `➕ Aggiungi Sezione` presente sia in calce alla vetrina che contestualmente tra una sezione e l'altra.
+  - [x] Modale di scelta tipologia con schede grafiche:
+    - 📸 **Carosello Articoli & Storie**: per testimonianze prima/dopo o storie cliniche supplementari.
+    - 🧴 **Griglia Prodotti**: per cataloghi secondari, linee tematiche o selezioni speciali.
+    - 🔘 **Banner Promozionale / Azione**: per bottoni d'azione personalizzati (WhatsApp, promozioni, percorsi).
+- [x] **8.2 Gestione Configurazioni Indipendenti per Istanze Multiple**:
+  - [x] Supporto nel profilo per impostazioni per-sezione (`customSections?: Record<string, CustomSectionConfig>`): titolo, testo banner, link e filtri dedicati per ciascun blocco duplicato o aggiunto.
+  - [x] Possibilità di filtrare il carosello per tipologia (es. carosello solo Testimonianze vs carosello Presentazione Prodotti).
+- [x] **8.3 Eliminazione Sezioni Extra / Duplicate**:
+  - [x] Pulsante 🗑️ `Elimina Sezione` nella toolbar delle sezioni aggiunte/duplicate per rimuoverle facilmente dall'ordine della pagina.
+
+---
+
 ### 🛡️ FASE 5: Sicurezza, Caching Locale & Performance (*Cybersecurity & Architect*)
 - [x] **5.1 Caching Locale Obbligatorio (Pattern Stale-While-Revalidate)**:
   - [x] Salvataggio immediato in `localStorage` delle preferenze di disposizione e visibilità per azzerare tempi di caricamento (0ms).

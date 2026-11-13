@@ -45,6 +45,15 @@ export interface Article {
   layoutConfig?: ArticleLayoutConfig;
 }
 
+export interface CustomSectionConfig {
+  title?: string;
+  bannerText?: string;
+  bannerButtonText?: string;
+  bannerUrl?: string;
+  bannerEnabled?: boolean;
+  articleFilterType?: 'all' | 'testimonial' | 'product';
+}
+
 export interface PublicProfile {
   name: string;
   bio: string;
@@ -55,6 +64,7 @@ export interface PublicProfile {
   // Dynamic Section Layout & Visibility
   sectionsOrder?: string[];
   hiddenSections?: string[];
+  customSections?: Record<string, CustomSectionConfig>;
   // Action Pill Banner
   actionBannerEnabled?: boolean;
   actionBannerText?: string;
@@ -122,6 +132,14 @@ export const useSettingsStore = defineStore('settings', () => {
       // Ignore localStorage parse error
     }
     return [];
+  };
+
+  const setCachedArticles = (arts: Article[]) => {
+    try {
+      localStorage.setItem(CACHE_KEY_ARTICLES, JSON.stringify(arts));
+    } catch {
+      // Ignore localStorage save error
+    }
   };
 
   const profile = ref<PublicProfile>(getCachedProfile());
@@ -479,6 +497,24 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   };
 
+  const updateArticlesOrder = async (orderedArticles: Article[]) => {
+    const updated = orderedArticles.map((art, idx) => ({ ...art, order: idx }));
+    articles.value = updated;
+    setCachedArticles(updated);
+
+    try {
+      const promises = updated.map((art) => {
+        const docRef = doc(db, 'articles', art.id);
+        return updateDoc(docRef, { order: art.order });
+      });
+      await Promise.all(promises);
+      logger.info('Articles order updated successfully');
+    } catch (e) {
+      logger.error('Error updating articles order', e);
+      throw e;
+    }
+  };
+
   const seedDefaultArticles = async () => {
     // Check if we already have articles
     if (articles.value.length > 0) return;
@@ -513,5 +549,6 @@ export const useSettingsStore = defineStore('settings', () => {
     addArticle,
     updateArticle,
     deleteArticle,
+    updateArticlesOrder,
   };
 });

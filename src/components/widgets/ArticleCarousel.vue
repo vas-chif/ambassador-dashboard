@@ -1,20 +1,41 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useSettingsStore } from 'stores/settings';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 
 import type { Article } from 'stores/settings';
 
+const props = withDefaults(
+  defineProps<{
+    filterType?: 'all' | 'testimonial' | 'product';
+    sectionId?: string;
+  }>(),
+  {
+    filterType: 'all',
+    sectionId: 'articles',
+  },
+);
+
+const emit = defineEmits<{
+  (e: 'edit-article', article: Article): void;
+}>();
+
 const store = useSettingsStore();
+const route = useRoute();
 const router = useRouter();
 const $q = useQuasar();
+
+const isPreview = computed(() => route.query.preview_mode === 'true');
 
 const slide = ref(1);
 
 const articles = computed(() => {
-  return (store.articles || [])
-    .filter((a: Article) => a.active)
+  let list = (store.articles || []).filter((a: Article) => a.active);
+  if (props.filterType && props.filterType !== 'all') {
+    list = list.filter((a: Article) => (a.layoutConfig?.articleType || 'testimonial') === props.filterType);
+  }
+  return list
     .sort((a: Article, b: Article) => (a.order || 0) - (b.order || 0))
     .map((a: Article, index: number) => ({ ...a, slideIndex: index + 1 })); // Slide names must be unique
 });
@@ -101,7 +122,24 @@ const getTextAlignClass = (article: Article) => {
     <q-separator class="q-mb-lg" />
 
     <div class="row justify-center">
-      <div class="col-12 q-px-sm max-width-carousel">
+      <div class="col-12 q-px-sm max-width-carousel relative-position">
+        <!-- In-Place Quick Edit Current Article (Preview Mode Only) -->
+        <div v-if="isPreview && currentArticle" class="carousel-quick-edit-action absolute-top-right q-ma-sm" style="z-index: 25">
+          <q-btn
+            unelevated
+            color="primary"
+            text-color="white"
+            icon="edit"
+            label="Modifica Articolo"
+            class="shadow-4 text-caption text-weight-bold q-px-sm"
+            size="sm"
+            no-caps
+            @click.stop="emit('edit-article', currentArticle)"
+          >
+            <q-tooltip>Modifica layout, testi e foto dell'articolo visibile</q-tooltip>
+          </q-btn>
+        </div>
+
         <!-- MOBILE: Vertical Full-Card Carousel -->
         <q-carousel
           v-if="$q.screen.lt.md"
