@@ -105,6 +105,12 @@
   - [x] Tasto rapido `+ Aggiungi Prodotto` integrato nella toolbar della griglia prodotti.
   - [x] Apertura del dialog prodotto (`ProductFormDialog.vue`) con upload e compressione automatica dell'immagine.
   - [x] Inserimento istantaneo del prodotto nella griglia con rating e pulsante WhatsApp.
+- [x] **4.3 Toolbar Fluttuante In-Place per Singolo Prodotto & Riordino Drag & Drop**:
+  - [x] Pillola contestuale (`[ ⠿ | ⬅️ ➡️ | ✏️ ]`) posizionata in alto a destra su ciascuna card prodotto in modalità preview.
+  - [x] Modifica immediata: clic su `✏️` per aprire `ProductFormDialog.vue` con i dati del prodotto precaricati e salvataggio reattivo.
+  - [x] Riordino a video con frecce rapide `⬅️` e `➡️` per scambiare posto istantaneamente con il prodotto adiacente.
+  - [x] Riordino Drag & Drop nativo HTML5 (maniglia `⠿` e drop sulla card bersaglio) con salvataggio batch automatico (`updateProductsOrder`).
+  - [x] Decomposizione modulare: estratto `ProductDetailDialog.vue` (208 righe) per preservare la soglia massima anti-monolite su `ProductGrid.vue` (§0.2 / §0.3).
 
 ---
 
