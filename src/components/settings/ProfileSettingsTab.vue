@@ -5,7 +5,7 @@
  * @author Vasile Chifeac (AI Agent)
  */
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
 import { useSettingsStore } from 'stores/settings';
 import { useSecureLogger } from 'src/shared/logger';
@@ -32,17 +32,37 @@ const onFileSelected = async (file: File | null) => {
     }
   }
 };
+
+const hasCustomAvatar = computed(() => {
+  const url = store.profile.avatarUrl;
+  return Boolean(url && !url.includes('quasar.dev') && !url.includes('placehold.co'));
+});
+
+const removeAvatar = async () => {
+  try {
+    $q.loading.show({ message: 'Rimozione avatar...' });
+    await store.updateProfile({ avatarUrl: '' });
+    $q.loading.hide();
+    $q.notify({ type: 'positive', message: 'Avatar rimosso con successo' });
+  } catch (e) {
+    logger.error('Errore durante la rimozione dell\'avatar:', e);
+    $q.loading.hide();
+    $q.notify({ type: 'negative', message: 'Rimozione non riuscita' });
+  }
+};
 </script>
 
 <template>
   <div class="q-gutter-y-lg">
     <!-- Avatar Section -->
     <div class="row items-center q-gutter-x-lg">
-      <q-avatar size="100px" class="shadow-2">
+      <q-avatar size="100px" class="shadow-2 bg-grey-2 text-grey-6">
         <img
-          :src="store.profile.avatarUrl || 'https://placehold.co/200'"
+          v-if="hasCustomAvatar"
+          :src="store.profile.avatarUrl"
           style="object-fit: cover; width: 100%; height: 100%"
         />
+        <q-icon v-else name="person" size="64px" color="grey-5" />
       </q-avatar>
       <div class="col">
         <div class="text-subtitle2 q-mb-sm">Foto Profilo / Avatar</div>
@@ -59,6 +79,17 @@ const onFileSelected = async (file: File | null) => {
             <q-icon name="cloud_upload" />
           </template>
         </q-file>
+        <q-btn
+          v-if="hasCustomAvatar"
+          flat
+          dense
+          size="sm"
+          color="negative"
+          icon="delete"
+          label="Rimuovi Foto Profilo"
+          class="q-mt-xs"
+          @click="removeAvatar"
+        />
       </div>
     </div>
 

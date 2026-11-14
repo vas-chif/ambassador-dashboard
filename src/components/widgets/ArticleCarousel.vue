@@ -98,6 +98,7 @@ const getButtonJustifyClass = (article: Article) => {
   <div v-if="articles.length > 0" class="article-showcase-section full-width q-mb-xl">
     <!-- 1. FULL-WIDTH TOP IMAGE CAROUSEL (Edge-to-Edge Showcase) -->
     <div class="carousel-full-width-wrapper relative-position full-width overflow-hidden">
+      <!-- In-Place Quick Edit & Duplicate Current Article (Preview Mode Only) -->
       <!-- Hidden Indicator Badge (Preview Mode Only) -->
       <div
         v-if="isPreview && currentArticle && currentArticle.active === false"

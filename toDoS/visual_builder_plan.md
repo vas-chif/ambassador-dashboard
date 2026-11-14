@@ -371,5 +371,15 @@
   - Controllo `q-toggle` "Prodotto Attivo / Nascosto" nel modale di modifica prodotto.
 
 ---
+
+### 👤 FASE 22: Pulizia Avatar di Default (Zero Immagini Demo) & Risoluzione Duplicati TypeScript
+- [x] **22.1 Rimozione Stock Photo Quasar Demo (`https://cdn.quasar.dev/img/avatar.png`)**:
+  - Eliminato il fallback hardcoded sull'immagine demo Quasar in [LandingPage.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/LandingPage.vue) e `https://placehold.co/200` in [ProfileSettingsTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/ProfileSettingsTab.vue).
+  - Implementata la computed `hasCustomAvatar`: se l'utente non ha caricato un'immagine, l'avatar mostra un contenitore neutro pulito con icona silhouette `person` (`color="grey-5"`), senza caricare immagini di terze persone.
+  - Aggiunto pulsante `Rimuovi Foto Profilo` in [ProfileSettingsTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/ProfileSettingsTab.vue) per permettere all'ambassador di azzerare la propria foto in qualsiasi momento.
+- [x] **22.2 Risoluzione Diagnostica TS2451 in `ArticleCarousel.vue`**:
+  - Rimossa la dichiarazione duplicata `let list` alle righe 35-36 di [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue).
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 

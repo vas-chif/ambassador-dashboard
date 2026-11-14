@@ -58,6 +58,11 @@ const targetAddIndex = ref<number | null>(null);
 const currentProfile = computed(() => settingsStore.profile);
 const currentArticles = computed(() => articlesStore.articles);
 
+const hasCustomAvatar = computed(() => {
+  const url = settingsStore.profile.avatarUrl;
+  return Boolean(url && !url.includes('quasar.dev') && !url.includes('placehold.co'));
+});
+
 // Profile Typography & Style Helpers
 const getProfileTitleClass = (secId: string): string => {
   const cfg = getCustomSectionConfig(secId);
@@ -461,11 +466,14 @@ onMounted(() => {
             v-if="getCustomSectionConfig(section).showAvatar !== false"
             class="row justify-center q-mb-md"
           >
-            <q-avatar size="140px" class="shadow-3">
+            <q-avatar size="140px" class="shadow-3 bg-grey-2 text-grey-6">
               <img
-                :src="settingsStore.profile.avatarUrl || 'https://cdn.quasar.dev/img/avatar.png'"
+                v-if="hasCustomAvatar"
+                :src="settingsStore.profile.avatarUrl"
                 alt="Ambassador Avatar"
+                style="object-fit: cover; width: 100%; height: 100%"
               />
+              <q-icon v-else name="person" size="84px" color="grey-5" />
             </q-avatar>
           </div>
 
