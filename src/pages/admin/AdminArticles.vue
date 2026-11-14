@@ -4,12 +4,14 @@ import { useArticlesStore } from 'stores/articles';
 import { useSettingsStore } from 'stores/settings';
 import type { Article } from 'stores/settings';
 import { useQuasar } from 'quasar';
+import { useSecureLogger } from 'src/shared/logger';
 
 import ArticleFormDialog from 'components/admin/ArticleFormDialog.vue';
 
 const store = useArticlesStore();
 const settingsStore = useSettingsStore();
 const $q = useQuasar();
+const logger = useSecureLogger();
 
 // Search & Filter State
 const searchQuery = ref('');
@@ -31,6 +33,7 @@ const filteredArticles = computed(() => {
 // --- ARTICLES LOGIC --- //
 const showArticleDialog = ref(false);
 const selectedArticle = ref<Article | null>(null);
+const isDuplicating = ref(false);
 
 const openAddArticle = () => {
   selectedArticle.value = null;
@@ -43,6 +46,8 @@ const openEditArticle = (article: Article) => {
 };
 
 const duplicateArticle = async (article: Article) => {
+  if (isDuplicating.value) return;
+  isDuplicating.value = true;
   try {
     const clone: Partial<Article> = { ...article };
     delete clone.id;
@@ -57,8 +62,10 @@ const duplicateArticle = async (article: Article) => {
       icon: 'content_copy',
     });
   } catch (e) {
-    console.error(e);
+    logger.error('Errore duplicazione articolo:', e);
     $q.notify({ type: 'negative', message: 'Errore durante la duplicazione dell\'articolo' });
+  } finally {
+    isDuplicating.value = false;
   }
 };
 
@@ -74,7 +81,7 @@ const confirmDeleteArticle = (article: Article) => {
         await store.deleteArticle(article.id);
         $q.notify({ type: 'positive', message: 'Article deleted' });
       } catch (e) {
-        console.error(e);
+        logger.error('Failed to delete article:', e);
         $q.notify({ type: 'negative', message: 'Failed to delete' });
       }
     })();
@@ -91,7 +98,7 @@ const toggleArticleStatus = async (article: Article) => {
       timeout: 1000,
     });
   } catch (e) {
-    console.error(e);
+    logger.error('Failed to update status:', e);
     $q.notify({ type: 'negative', message: 'Failed to update status' });
   }
 };

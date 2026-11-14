@@ -70,3 +70,7 @@ Per ottimizzare la velocità di caricamento e azzerare i costi di archiviazione 
    `https://wa.me/<numero>?text=<messaggio_codificato>`
 3. Il messaggio include automaticamente il nome del prodotto e il codice promozionale dell'ambassador per una chiusura rapida della vendita.
 
+### 4. Deduplicazione e Prevenzione Race-Condition
+* In `addProduct()` e `addArticle()`, l'aggiunta locale ottimistica verifica sempre l'unicità tramite `if (!products.value.some(p => p.id === docRef.id))`.
+* In `onSnapshot`, i documenti vengono raccolti in una struttura `Map<string, Product>` garantendo la totale assenza di duplicati visivi tra listener realtime e chiamate API.
+

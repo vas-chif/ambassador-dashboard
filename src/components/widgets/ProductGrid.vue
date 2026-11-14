@@ -41,6 +41,7 @@ const selectedProduct = ref<Product | null>(null);
 // Drag & Drop Reordering State
 const draggedIndex = ref<number | null>(null);
 const dragOverIndex = ref<number | null>(null);
+const isDuplicating = ref(false);
 
 onMounted(() => {
   store.subscribeToProducts();
@@ -105,6 +106,8 @@ const handleToggleSave = async (prod: Product) => {
 };
 
 const handleDuplicateProduct = async (product: Product) => {
+  if (isDuplicating.value) return;
+  isDuplicating.value = true;
   try {
     const clone: Partial<Product> = { ...product };
     delete clone.id;
@@ -132,6 +135,8 @@ const handleDuplicateProduct = async (product: Product) => {
       type: 'negative',
       message: 'Errore durante la duplicazione del prodotto',
     });
+  } finally {
+    isDuplicating.value = false;
   }
 };
 

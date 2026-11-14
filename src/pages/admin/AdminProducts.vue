@@ -13,11 +13,14 @@ import type { Product } from 'src/types/product';
 
 import { useProductsStore } from 'stores/products';
 import { useQuasar } from 'quasar';
+import { useSecureLogger } from 'src/shared/logger';
 
 const showAddDialog = ref(false);
 const editingProduct = ref<Product | null>(null);
+const isDuplicating = ref(false);
 const store = useProductsStore();
 const $q = useQuasar();
+const logger = useSecureLogger();
 
 const openAddDialog = () => {
   editingProduct.value = null;
@@ -36,12 +39,14 @@ const handleDelete = (product: Product) => {
       $q.notify({ type: 'positive', message: 'Product deleted' });
     })
     .catch((error) => {
-      console.error(error);
+      logger.error('Failed to delete product', error);
       $q.notify({ type: 'negative', message: 'Failed to delete' });
     });
 };
 
 const handleDuplicate = async (product: Product) => {
+  if (isDuplicating.value) return;
+  isDuplicating.value = true;
   try {
     const clone: Partial<Product> = { ...product };
     delete clone.id;
@@ -64,8 +69,10 @@ const handleDuplicate = async (product: Product) => {
       icon: 'content_copy',
     });
   } catch (error: unknown) {
-    console.error(error);
+    logger.error('Errore durante la duplicazione del prodotto:', error);
     $q.notify({ type: 'negative', message: 'Errore durante la duplicazione del prodotto' });
+  } finally {
+    isDuplicating.value = false;
   }
 };
 
@@ -80,7 +87,7 @@ const handleSave = async (productData: Partial<Product>) => {
     }
     showAddDialog.value = false;
   } catch (error: unknown) {
-    console.error(error);
+    logger.error('Error saving product', error);
     $q.notify({ type: 'negative', message: 'Error saving product' });
   }
 };

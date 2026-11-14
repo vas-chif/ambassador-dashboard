@@ -59,11 +59,13 @@ export const useArticlesStore = defineStore('articles', () => {
       unsubscribeArticles = onSnapshot(
         q,
         (snapshot) => {
-          const list: Article[] = [];
+          const map = new Map<string, Article>();
           snapshot.forEach((docSnap) => {
-            list.push({ id: docSnap.id, ...(docSnap.data() as Omit<Article, 'id'>) });
+            map.set(docSnap.id, { id: docSnap.id, ...(docSnap.data() as Omit<Article, 'id'>) });
           });
-          list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+          const list = Array.from(map.values()).sort(
+            (a, b) => (a.order ?? 999) - (b.order ?? 999),
+          );
           articles.value = list;
           setCachedArticles(list);
           logger.info(`Sincronizzati ${list.length} articoli con cache locale.`);
@@ -131,9 +133,13 @@ export const useArticlesStore = defineStore('articles', () => {
       const articlesRef = collection(db, 'articles');
       const docRef = await addDoc(articlesRef, article);
       const newArticle: Article = { id: docRef.id, ...article };
-      articles.value = [...articles.value, newArticle].sort(
-        (a, b) => (a.order ?? 999) - (b.order ?? 999),
-      );
+
+      // Deduplicazione: aggiunge in memoria solo se onSnapshot non ha già inserito l'articolo
+      if (!articles.value.some((a) => a.id === docRef.id)) {
+        articles.value = [...articles.value, newArticle].sort(
+          (a, b) => (a.order ?? 999) - (b.order ?? 999),
+        );
+      }
       setCachedArticles(articles.value);
       logger.info('Articolo aggiunto con successo');
       return newArticle;

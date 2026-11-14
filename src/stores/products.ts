@@ -58,15 +58,17 @@ export const useProductsStore = defineStore('products', () => {
     unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        products.value = snapshot.docs
-          .map(
-            (doc) =>
-              ({
-                id: doc.id,
-                ...doc.data(),
-              }) as Product,
-          )
-          .sort((a, b) => (a.order ?? 999) - (b.order ?? 999)); // Sort by order field
+        const uniqueDocs = new Map<string, Product>();
+        snapshot.docs.forEach((docSnap) => {
+          uniqueDocs.set(docSnap.id, {
+            id: docSnap.id,
+            ...docSnap.data(),
+          } as Product);
+        });
+
+        products.value = Array.from(uniqueDocs.values()).sort(
+          (a, b) => (a.order ?? 999) - (b.order ?? 999),
+        );
 
         try {
           localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
@@ -98,15 +100,20 @@ export const useProductsStore = defineStore('products', () => {
       const colRef = collection(db, 'products');
       const docRef = await addDoc(colRef, product);
       const newProd: Product = { id: docRef.id, ...(product as Omit<Product, 'id'>) };
-      products.value = [...products.value, newProd].sort(
-        (a, b) => (a.order ?? 999) - (b.order ?? 999),
-      );
+
+      // Deduplicazione: aggiunge in memoria solo se onSnapshot non ha già inserito il prodotto
+      if (!products.value.some((p) => p.id === docRef.id)) {
+        products.value = [...products.value, newProd].sort(
+          (a, b) => (a.order ?? 999) - (b.order ?? 999),
+        );
+      }
       try {
         localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(products.value));
       } catch {
         // Ignore quota error
       }
       logger.info('Product added', { name: product.name });
+      return newProd;
     } catch (error: unknown) {
       logger.error('Error adding product', error);
       throw error;

@@ -54,6 +54,7 @@ const selectedArticle = ref<Article | null>(null);
 const selectedProduct = ref<Product | null>(null);
 const activeSettingsSection = ref<string>('');
 const targetAddIndex = ref<number | null>(null);
+const isDuplicatingArticle = ref(false);
 
 const currentProfile = computed(() => settingsStore.profile);
 const currentArticles = computed(() => articlesStore.articles);
@@ -240,6 +241,8 @@ const openEditArticle = (article: Article) => {
 };
 
 const handleDuplicateArticle = async (article: Article) => {
+  if (isDuplicatingArticle.value) return;
+  isDuplicatingArticle.value = true;
   try {
     const clone: Partial<Article> = { ...article };
     delete clone.id;
@@ -260,6 +263,8 @@ const handleDuplicateArticle = async (article: Article) => {
       type: 'negative',
       message: 'Errore durante la duplicazione dell\'articolo',
     });
+  } finally {
+    isDuplicatingArticle.value = false;
   }
 };
 

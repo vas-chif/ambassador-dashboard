@@ -431,5 +431,17 @@
   - Aggiornata la scheda di anteprima live in [ArticleFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ArticleFormDialog.vue) con `v-html`.
 
 ---
+
+### 🛡️ FASE 27: Risoluzione Race-Condition & Deduplicazione Istantanea Store (Prodotti & Articoli)
+- [x] **27.1 Deduplicazione Reattiva su `addProduct` ([src/stores/products.ts](file:///home/chif-vas/projects/beauty-ambassador/src/stores/products.ts))**:
+  - Risolta la race-condition per cui `onSnapshot` inseriva il nuovo documento prima del termine di `addProduct`, causando l'inserimento duplicato in memoria.
+  - Aggiunto controllo preventivo `if (!products.value.some(p => p.id === docRef.id))` e mappatura `Map<string, Product>` in `onSnapshot` per garantire zero duplicati a schermo.
+- [x] **27.2 Deduplicazione Reattiva su `addArticle` ([src/stores/articles.ts](file:///home/chif-vas/projects/beauty-ambassador/src/stores/articles.ts))**:
+  - Applicata la medesima architettura di protezione a `addArticle` e al listener realtime degli articoli.
+- [x] **27.3 Protezione Anti-Doppio Clic & Audit Logger ([AdminProducts.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminProducts.vue), [AdminArticles.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/admin/AdminArticles.vue), [ProductGrid.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ProductGrid.vue), [LandingPage.vue](file:///home/chif-vas/projects/beauty-ambassador/src/pages/LandingPage.vue))**:
+  - Aggiunti flag di blocco `isDuplicating` durante l'esecuzione asincrona per evitare click ravvicinati accidentali.
+  - Rimossi tutti i `console.error` a favore di `useSecureLogger()` nel pieno rispetto della regola §4.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 
