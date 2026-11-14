@@ -581,7 +581,7 @@ onMounted(() => {
           class="max-width-container q-px-md q-pb-xl"
         >
           <div class="text-center q-mb-lg">
-            <h2 class="text-h4 text-weight-light q-mb-sm" :style="{ color: BRAND_PRIMARY }">
+            <h2 class="text-h4 text-weight-light q-mb-sm site-title-font" :style="{ color: BRAND_PRIMARY }">
               {{ getCustomSectionConfig(section).title || settingsStore.profile.productsSectionTitle || 'I Miei Prodotti Preferiti' }}
             </h2>
             <div class="separator-line mx-auto" :style="{ backgroundColor: BRAND_GOLD }"></div>

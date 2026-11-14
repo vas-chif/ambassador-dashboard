@@ -66,3 +66,16 @@ In `settingsStore.applyTheme()`:
 * L'ambassador può caricare e nominare QR code specifici (es. per il proprio catalogo WhatsApp, recensioni Google o pagina personale).
 * Include funzioni di **Zoom ad alta risoluzione** per mostrare il QR code a schermo intero e **Download automatico** per la stampa.
 
+### 5. Tipografia del Brand & Font Dinamici
+* **Campi**: `titleFont` (Font per Heading e Brand Name) e `bodyFont` (Font per il corpo del testo e descrizioni).
+* **Componente dedicato**: [FontSettingsSection.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/FontSettingsSection.vue) integrato nella tab *Colori & Branding*.
+* **Font Titoli Selezionabili**:
+  - *Playfair Display* (Serif Elegante, Editoriale)
+  - *Cormorant Garamond* (Serif Lusso, Cosmetica d'élite)
+  - *Cinzel* (Serif Classico, Profumeria di nicchia)
+  - *Plus Jakarta Sans* (Sans Moderno, Beauty Tech)
+  - *Montserrat* (Sans Geometrico, Audace)
+  - *Figtree* (Sans Pulito, Minimalista)
+* **Font Corpo Selezionabili**: *Figtree*, *Plus Jakarta Sans*, *Inter*, *Playfair Display*.
+* **Reattività Istantanea**: All'interno di `settingsStore.applyTheme()`, le variabili CSS `:root` (`--site-title-font` e `--site-body-font`) vengono aggiornate in tempo reale su `document.documentElement`, consentendo l'anteprima istantanea a 0ms senza refresh di pagina.
+

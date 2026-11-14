@@ -64,6 +64,9 @@ export interface PublicProfile {
   avatarUrl: string;
   primaryColor: string;
   secondaryColor: string;
+  fontFamily?: string;
+  titleFont?: string;
+  bodyFont?: string;
   productsSectionTitle?: string;
   // Dynamic Section Layout & Visibility
   sectionsOrder?: string[];
@@ -106,6 +109,8 @@ export const useSettingsStore = defineStore('settings', () => {
       avatarUrl: '',
       primaryColor: '#341414',
       secondaryColor: '#855457',
+      titleFont: 'Playfair Display',
+      bodyFont: 'Figtree',
       productsSectionTitle: 'I Miei Prodotti Preferiti',
       sectionsOrder: ['profile', 'articles', 'actionBanner', 'products'],
       hiddenSections: [],
@@ -133,6 +138,21 @@ export const useSettingsStore = defineStore('settings', () => {
   const applyTheme = (p: PublicProfile) => {
     if (p.primaryColor) setCssVar('primary', p.primaryColor);
     if (p.secondaryColor) setCssVar('secondary', p.secondaryColor);
+
+    if (typeof document !== 'undefined') {
+      const titleFont = p.titleFont || p.fontFamily || 'Playfair Display';
+      const bodyFont = p.bodyFont || 'Figtree';
+      const isTitleSerif = ['Playfair Display', 'Cormorant Garamond', 'Cinzel'].includes(titleFont);
+      const isBodySerif = ['Playfair Display', 'Cormorant Garamond', 'Cinzel'].includes(bodyFont);
+      document.documentElement.style.setProperty(
+        '--site-title-font',
+        `"${titleFont}", ${isTitleSerif ? 'serif' : 'sans-serif'}`
+      );
+      document.documentElement.style.setProperty(
+        '--site-body-font',
+        `"${bodyFont}", ${isBodySerif ? 'serif' : 'sans-serif'}`
+      );
+    }
   };
 
   // Apply cached theme immediately
@@ -375,6 +395,7 @@ export const useSettingsStore = defineStore('settings', () => {
   return {
     profile,
     loading,
+    applyTheme,
     subscribeToProfile,
     unsubscribeAll,
     unsubscribeFromProfile: unsubscribeAll,

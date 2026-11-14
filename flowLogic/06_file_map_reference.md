@@ -67,7 +67,14 @@ Questa guida rapida elenca ogni file e directory del progetto, spiegandone con p
 * **[ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue)**: Carosello multimediale con doppia modalità Desktop e Mobile Touch.
 * **[ContactDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ContactDialog.vue)**: Modale di invio email con supporto EmailJS.
 
-### C. Page Builder (`src/components/builder/`)
+### C. Componenti Impostazioni & Branding (`src/components/settings/`)
+* **[ProfileSettingsTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/ProfileSettingsTab.vue)**: Gestione anagrafica ambassador, bio, social e caricamento/rimozione avatar.
+* **[BrandingSettingsTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/BrandingSettingsTab.vue)**: Gestione palette colori predefinite, colori personalizzati primario/secondario e anteprima dal vivo.
+* **[FontSettingsSection.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/FontSettingsSection.vue)**: Selezione visiva dei font per i titoli e per il corpo del testo, con card interattive e anteprima tipografica.
+* **[QrCodesSettingsTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/QrCodesSettingsTab.vue)**: Generazione, visualizzazione fullscreen e download dei codici QR.
+* **[EmailConfigTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/EmailConfigTab.vue)**: Configurazione parametri di integrazione EmailJS.
+
+### D. Page Builder (`src/components/builder/`)
 * **[PageEditor.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/builder/PageEditor.vue)**: Canvas drag & drop per comporre e riordinare i widget della pagina.
 
 ---

@@ -381,5 +381,43 @@
   - Rimossa la dichiarazione duplicata `let list` alle righe 35-36 di [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue).
 
 ---
+
+### 🚀 FASE 23: Configurazione Firebase Hosting Multi-Site CI/CD (Risoluzione Exit Code 2)
+- [x] **23.1 Riconciliazione Multi-Sito su Singolo Progetto `glowandcarespace-maria`**:
+  - Diagnosticato che sia il sito primario (`glowandcarespace-maria`) sia il sito di staging (`staging-glowandcarespace`) sono due siti di hosting appartenenti allo stesso progetto Google/Firebase `glowandcarespace-maria`.
+- [x] **23.2 Mappatura Target in `firebase.json` & `.firebaserc`**:
+  - Trasformata la configurazione `"hosting"` in `firebase.json` in un array multi-target con target espliciti `"staging"` e `"production"`.
+  - Mappati i target `staging` (`staging-glowandcarespace`) e `production` (`glowandcarespace-maria`) in `.firebaserc`.
+- [x] **23.3 Aggiornamento GitHub Actions Workflows**:
+  - In [firebase-hosting-dev.yml](file:///home/chif-vas/projects/beauty-ambassador/.github/workflows/firebase-hosting-dev.yml): impostato `projectId: glowandcarespace-maria`, `target: staging` e autenticazione con `FIREBASE_SERVICE_ACCOUNT_GLOWANDCARESPACE_MARIA`.
+  - In [firebase-hosting-merge.yml](file:///home/chif-vas/projects/beauty-ambassador/.github/workflows/firebase-hosting-merge.yml): impostato `projectId: glowandcarespace-maria` e `target: production`.
+
+---
+
+### 🧭 FASE 24: Evidenziazione Attiva nel Drawer di Navigazione Admin (`AdminLayout.vue`)
+- [x] **24.1 Rilevamento Reattivo Route Attiva**:
+  - Integrato `useRoute` da `vue-router` e funzione helper `isRouteActive` per verificare con precisione se la route corrente corrisponde alla voce di menu.
+- [x] **24.2 Styling Luxury & Visual Feedback**:
+  - Applicata classe `.admin-nav-item--active` con sfondo leggero primario (`rgba(52, 20, 20, 0.08)`), bordo sinistro a rilievo `4px solid var(--q-primary)`, icona e testo in grassetto primario `text-primary text-weight-bold`.
+  - Inserito dot circolare indicatore sul lato destro (`side`) per rendere evidente e immediato a colpo d'occhio su quale sezione della console si trova l'ambassador.
+
+---
+
+### 🎨 FASE 25: Tipografia & Selezione Font del Brand in Impostazioni (`FontSettingsSection.vue`)
+- [x] **25.1 Sub-Componente Modulare `FontSettingsSection.vue` (§0.2 / §0.3 AGENTS.md)**:
+  - Creata una nuova sezione dedicata in `src/components/settings/FontSettingsSection.vue` per selezionare:
+    - **Font dei Titoli**: *Playfair Display* (Serif Elegante), *Cormorant Garamond* (Serif Lusso), *Cinzel* (Serif Classico), *Plus Jakarta Sans* (Sans Moderno), *Montserrat* (Sans Geometrico), *Figtree* (Sans Pulito).
+    - **Font per il Corpo del Testo**: *Figtree* (Consigliato leggibilità), *Plus Jakarta Sans* (Moderno), *Inter* (Neutro), *Playfair Display* (Total Luxury).
+  - Card interattive con anteprima visiva reale renderizzata nel font corrispondente, badge di categoria e descrizione del mood.
+- [x] **25.2 Precaricamento Tipografico & Variabili CSS `:root`**:
+  - Aggiornato [index.html](file:///home/chif-vas/projects/beauty-ambassador/index.html) per precaricare i Google Fonts necessari.
+  - Aggiornato [app.scss](file:///home/chif-vas/projects/beauty-ambassador/src/css/app.scss) con variabili dinamiche `--site-title-font` e `--site-body-font`.
+- [x] **25.3 Integrazione Pinia & Aggiornamento Dinamico a 0ms**:
+  - Estesa l'interfaccia `PublicProfile` in [settings.ts](file:///home/chif-vas/projects/beauty-ambassador/src/stores/settings.ts) con `titleFont?: string` e `bodyFont?: string`.
+  - In `applyTheme()`: aggiornamento in tempo reale delle variabili CSS su `document.documentElement`, consentendo l'anteprima istantanea senza ricaricare la pagina.
+- [x] **25.4 Integrazione nella Scheda "Colori & Branding" ([BrandingSettingsTab.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/settings/BrandingSettingsTab.vue))**:
+  - Inserito `FontSettingsSection` nella scheda e potenziata la card di anteprima dal vivo per mostrare titolo del salone, bio e pulsanti con i colori e i font selezionati.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 

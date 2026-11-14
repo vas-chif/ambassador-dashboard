@@ -1,7 +1,20 @@
 {
   "projects": {
     "default": "glowandcarespace-maria",
-    "staging": "staging-glowandcarespace",
+    "staging": "glowandcarespace-maria",
     "production": "glowandcarespace-maria"
-  }
+  },
+  "targets": {
+    "glowandcarespace-maria": {
+      "hosting": {
+        "staging": [
+          "staging-glowandcarespace"
+        ],
+        "production": [
+          "glowandcarespace-maria"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
