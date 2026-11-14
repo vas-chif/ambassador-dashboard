@@ -207,10 +207,13 @@ const saveProduct = async () => {
                   min-height="8rem"
                   placeholder="Describe your product..."
                   class="bg-white"
-                  :content-style="{ fontSize: '14px' }"
+                  :content-style="{ fontSize: '14px', lineHeight: '1.6' }"
                   :toolbar="[
                     ['bold', 'italic', 'underline', 'strike'],
-                    ['hr', 'link'],
+                    ['left', 'center', 'right', 'justify'],
+                    ['unordered', 'ordered'],
+                    ['hr', 'link', 'removeFormat'],
+                    ['undo', 'redo'],
                   ]"
                 >
                 </q-editor>
@@ -226,11 +229,13 @@ const saveProduct = async () => {
                   min-height="8rem"
                   placeholder="Detailed instructions, usage tips, etc..."
                   class="bg-white"
-                  :content-style="{ fontSize: '14px' }"
+                  :content-style="{ fontSize: '14px', lineHeight: '1.6' }"
                   :toolbar="[
                     ['bold', 'italic', 'underline', 'strike'],
-                    ['hr', 'link'],
+                    ['left', 'center', 'right', 'justify'],
                     ['unordered', 'ordered'],
+                    ['hr', 'link', 'removeFormat'],
+                    ['undo', 'redo'],
                   ]"
                 >
                 </q-editor>

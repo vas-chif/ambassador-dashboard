@@ -67,3 +67,9 @@ Il componente [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambass
   2. Titolo e sommario leggibili con scroll fluido.
   3. Pulsante di chiamata all'azione ben evidente e comodo per il pollice.
 
+---
+
+## ✍️ Formattazione Avanzata del Testo (Rich-Text Editor)
+* **Editor WYSIWYG (`q-editor`)**: In [ArticleFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ArticleFormDialog.vue), l'ambassador dispone della toolbar completa di formattazione (grassetto, corsivo, sottolineato, barrato, elenchi puntati/numerati, allineamento, link e linee divisorie).
+* **Rendering Sicuro & Responsive**: In [ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue), la descrizione viene renderizzata tramite `v-html` garantendo il rispetto della formattazione, spaziatura corretta dei paragrafi e liste stilizzate sia su Desktop che su Mobile.
+

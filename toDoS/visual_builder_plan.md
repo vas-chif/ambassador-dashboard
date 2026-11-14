@@ -419,5 +419,17 @@
   - Inserito `FontSettingsSection` nella scheda e potenziata la card di anteprima dal vivo per mostrare titolo del salone, bio e pulsanti con i colori e i font selezionati.
 
 ---
+
+### ✍️ FASE 26: Funzioni Avanzate di Formattazione Testo Rich-Text per Articoli e Prodotti
+- [x] **26.1 Integrazione `<q-editor>` su Articoli ([ArticleFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ArticleFormDialog.vue))**:
+  - Sostituita la semplice textarea con l'editor rich-text `<q-editor>` per la *Descrizione / Testimonianza Narrativa*.
+  - Configurato il set completo di funzioni di formattazione: grassetto, corsivo, sottolineato, barrato, allineamenti (sinistra, centro, destra, giustificato), elenchi puntati e numerati, divisori orizzontali, link, pulizia formato e annulla/ripristina.
+- [x] **26.2 Potenziamento Funzioni Editor Prodotti ([ProductFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ProductFormDialog.vue))**:
+  - Aggiornati i campi *Product Description* e *Product Instructions* con la toolbar uniforme e avanzata a 5 sezioni (stili, allineamenti, liste, utilità, history).
+- [x] **26.3 Rendering HTML & Supporto Stili nella Vetrina Pubblica ([ArticleCarousel.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/widgets/ArticleCarousel.vue))**:
+  - Aggiornato il rendering della descrizione da stringa pura a `v-html="currentArticle.description"` con regole SCSS dedicate per paragrafi, margini e liste puntate/numerate.
+  - Aggiornata la scheda di anteprima live in [ArticleFormDialog.vue](file:///home/chif-vas/projects/beauty-ambassador/src/components/admin/ArticleFormDialog.vue) con `v-html`.
+
+---
 *Piano redatto in conformità con [AGENTS.md](file:///home/chif-vas/projects/beauty-ambassador/AGENTS.md) — Modalità Staging su branch `dev`.*
 

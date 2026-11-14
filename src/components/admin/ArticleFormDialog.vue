@@ -222,15 +222,25 @@ const onSubmit = async () => {
                 :rules="[(val) => !!val || 'Il titolo è obbligatorio']"
               />
 
-              <q-input
-                v-model="form.description"
-                label="Descrizione / Testimonianza Narrativa"
-                type="textarea"
-                outlined
-                rows="5"
-                class="q-mb-md"
-                placeholder="Racconta i dettagli del trattamento, consigli skincare o la storia di miglioramento..."
-              />
+              <div class="q-mb-md">
+                <div class="text-subtitle2 q-mb-xs text-grey-8">
+                  Descrizione / Testimonianza Narrativa
+                </div>
+                <q-editor
+                  v-model="form.description"
+                  min-height="9rem"
+                  placeholder="Racconta i dettagli del trattamento, consigli skincare o la storia di miglioramento..."
+                  class="bg-white border rounded-borders"
+                  :content-style="{ fontSize: '14px', lineHeight: '1.6' }"
+                  :toolbar="[
+                    ['bold', 'italic', 'underline', 'strike'],
+                    ['left', 'center', 'right', 'justify'],
+                    ['unordered', 'ordered'],
+                    ['hr', 'link', 'removeFormat'],
+                    ['undo', 'redo'],
+                  ]"
+                />
+              </div>
 
               <div class="row q-col-gutter-sm q-mb-md">
                 <div class="col-12 col-sm-6">
@@ -386,9 +396,11 @@ const onSubmit = async () => {
                 <div class="text-h6 text-primary font-serif text-weight-bold q-mb-xs full-width">
                   {{ form.title || 'Titolo della Storia' }}
                 </div>
-                <div class="text-caption text-grey-7 q-mb-sm line-clamp-3 full-width" style="max-height: 60px; overflow: hidden">
-                  {{ form.description || 'La descrizione comparirà qui sotto all\'immagine in tempo reale...' }}
-                </div>
+                <div
+                  class="text-caption text-grey-7 q-mb-sm line-clamp-3 full-width article-preview-description"
+                  style="max-height: 80px; overflow: hidden"
+                  v-html="form.description || 'La descrizione comparirà qui sotto all\'immagine in tempo reale...'"
+                ></div>
                 <div
                   class="row full-width q-my-xs"
                   :class="form.layoutConfig.textAlign === 'left' ? 'justify-start' : form.layoutConfig.textAlign === 'right' ? 'justify-end' : 'justify-center'"
@@ -419,5 +431,15 @@ const onSubmit = async () => {
 
 .transition-easy {
   transition: all 0.2s ease;
+}
+
+:deep(.article-preview-description) {
+  p {
+    margin-bottom: 0.25rem;
+  }
+  ul, ol {
+    padding-left: 1rem;
+    margin-bottom: 0.25rem;
+  }
 }
 </style>

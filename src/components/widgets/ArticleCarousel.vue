@@ -250,9 +250,8 @@ const getButtonJustifyClass = (article: Article) => {
           <!-- Article Full Description (Unclamped, elegant spacing) -->
           <div
             :class="`text-body1 text-grey-8 text-weight-light carousel-story-description q-mb-md full-width ${getTextAlignClass(currentArticle)}`"
-          >
-            {{ currentArticle.description }}
-          </div>
+            v-html="currentArticle.description"
+          ></div>
 
           <!-- Action CTA Button -->
           <div :class="`row full-width q-my-sm ${getButtonJustifyClass(currentArticle)}`">
@@ -312,8 +311,19 @@ const getButtonJustifyClass = (article: Article) => {
 .carousel-story-description {
   font-size: 1.05rem;
   line-height: 1.65;
-  white-space: pre-line;
   max-width: 740px;
+
+  p {
+    margin-bottom: 0.5rem;
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  ul, ol {
+    padding-left: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 .carousel-story-btn {
